@@ -1,0 +1,22 @@
+You are an expert Full-Stack Developer specialized in Next.js 14+ (App Router), TypeScript, Tailwind CSS, Shadcn UI, Supabase (@supabase/ssr), and Stripe API.
+
+PROJECT: "MERCADEO" - SaaS all-in-one business management app, online public catalog, and AI business advisor for small businesses and creators.
+
+BUSINESS MODEL: Paid SaaS with a 14-day Free Trial (credit card required upfront via Stripe).
+
+BRANDING & PALETTE:
+- Primary/Backgrounds: Clean White/Slate (#F8FAFC) & Deep Slate Dark (#0A2540)
+- Accents: Deep Teal (#0A2540), Cyan Blue (#00D2FF), Vibrant Emerald Green (#22C55E)
+- Typography: Inter / Plus Jakarta Sans
+
+TECH STACK:
+- Next.js 14 App Router (TypeScript)
+- Tailwind CSS + Lucide Icons + Shadcn UI
+- Supabase SSR (Auth, Database, Storage)
+- Payments: Stripe SDK + Webhooks
+- Vercel AI SDK (OpenAI/Claude API)
+
+CODING RULES:
+1. Mobile-first responsive UI.
+2. Use React Server Components by default; use 'use client' only for active interaction.
+3. Keep layout clean, modern, and accessible with high contrast for numbers and buttons.

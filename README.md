@@ -1,36 +1,36 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MERCADEO
+
+All-in-one business management platform with online catalog and AI copilot.
+
+## Stack
+
+- Next.js 16 (App Router) + TypeScript
+- Tailwind CSS v4 + Shadcn UI + Lucide Icons
+- Supabase (`@supabase/ssr`) for auth and database
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+cp .env.local.example .env.local
+# Add your Supabase URL and anon key to .env.local
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Project Structure
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Path | Purpose |
+|------|---------|
+| `app/(auth)/` | Login & registration |
+| `app/(dashboard)/` | Protected business management |
+| `app/(public)/catalog/` | Public product storefront |
+| `components/` | Shared UI and layout components |
+| `lib/supabase/` | Supabase client utilities |
+| `types/` | TypeScript type definitions |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Supabase Setup
 
-## Learn More
+1. Create a Supabase project at [supabase.com](https://supabase.com)
+2. Run the schema SQL from `.cursorrules` in the SQL Editor
+3. Copy project URL and anon key to `.env.local`
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+See `.cursorrules` for full schema, RLS policies, and development guidelines.
