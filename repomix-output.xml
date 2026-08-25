@@ -1,0 +1,4760 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+app/
+  (auth)/
+    (onboarding)/
+      page.tsx
+    login/
+      page.tsx
+    register/
+      page.tsx
+  (dashboard)/
+    copilot/
+      page.tsx
+    customers/
+      page.tsx
+    dashboard/
+      ai-copilot/
+        page.tsx
+      inventory/
+        page.tsx
+      pos/
+        page.tsx
+      settings/
+        page.tsx
+      page.tsx
+    orders/
+      page.tsx
+    settings/
+      page.tsx
+    layout.tsx
+  (public)/
+    [slug]/
+      page.tsx
+  api/
+    billing/
+      expired/
+        page.tsx
+      submit-payment/
+        route.ts
+    copilot/
+      route.ts
+  billing/
+    expired/
+      page.tsx
+  favicon.ico
+  globals.css
+  layout.tsx
+  page.tsx
+components/
+  layout/
+    dashboard-shell.tsx
+    sidebar-nav.tsx
+  marketing/
+    landing-hero.tsx
+  ui/
+    avatar.tsx
+    badge.tsx
+    button.tsx
+    card.tsx
+    dropdown-menu.tsx
+    input.tsx
+    label.tsx
+    separator.tsx
+    sheet.tsx
+lib/
+  supabase/
+    client.ts
+    index.ts
+    server.ts
+    storage.ts
+  payments.ts
+  utils.ts
+public/
+  file.svg
+  globe.svg
+  next.svg
+  vercel.svg
+  window.svg
+types/
+  database.ts
+  index.ts
+.cursorrules
+.gitignore
+AGENTS.md
+CLAUDE.md
+components.json
+eslint.config.mjs
+middleware.ts
+next.config.ts
+output.txt
+package.json
+postcss.config.mjs
+README.md
+tsconfig.json
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="app/(auth)/(onboarding)/page.tsx">
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
+import { 
+  ArrowRight, 
+  CheckCircle2, 
+  Sparkles, 
+  Loader2, 
+  Phone, 
+  Check 
+} from 'lucide-react';
+
+export default function OnboardingPage() {
+  const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const [businessName, setBusinessName] = useState('');
+  const [slug, setSlug] = useState('');
+  const [category, setCategory] = useState('Calzado y Moda');
+  const [phoneWhatsapp, setPhoneWhatsapp] = useState('');
+
+  const router = useRouter();
+  const supabase = createClient();
+
+  const handleSlugChange = (text: string) => {
+    const formatted = text
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, '')
+      .replace(/\s+/g, '-');
+    setSlug(formatted);
+  };
+
+  const handleCompleteOnboarding = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) throw new Error('Usuario no autenticado.');
+
+      const { error: updateError } = await (supabase
+        .from('profiles') as any)
+        .update({
+       business_name: businessName,
+       slug,
+       category_niche: category,
+       phone_whatsapp: phoneWhatsapp,
+        subscription_status: 'trialing',
+       trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+     })
+        .eq('id', user.id);
+      if (updateError) throw updateError;
+
+      router.push('/dashboard');
+      router.refresh();
+    } catch (err: any) {
+      setError(err.message || 'Ocurrió un error al guardar los datos.');
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-lg">
+        <div className="flex items-center justify-between mb-8 px-4">
+          {[1, 2, 3].map((s) => (
+            <div key={s} className="flex items-center gap-2">
+              <div
+                className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm transition-all ${
+                  step === s
+                    ? 'bg-[#0A2540] text-[#00D2FF] ring-4 ring-cyan-100'
+                    : step > s
+                    ? 'bg-[#22C55E] text-white'
+                    : 'bg-slate-200 text-slate-500'
+                }`}
+              >
+                {step > s ? <Check className="w-5 h-5" /> : s}
+              </div>
+              <span className="text-xs font-semibold text-slate-600 hidden sm:inline">
+                {s === 1 ? 'Negocio' : s === 2 ? 'Contacto' : 'Activación'}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <div className="bg-white py-8 px-6 shadow-sm border border-slate-200 rounded-3xl sm:px-10">
+          {error && (
+            <div className="mb-6 p-3.5 text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl font-medium">
+              {error}
+            </div>
+          )}
+
+          {step === 1 && (
+            <div className="space-y-5">
+              <div>
+                <h3 className="text-xl font-black text-[#0A2540]">Detalles del Negocio</h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  Ingresa el nombre y tu enlace público único
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                  Nombre de tu Empresa / Tienda
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={businessName}
+                  onChange={(e) => {
+                    setBusinessName(e.target.value);
+                    if (!slug) handleSlugChange(e.target.value);
+                  }}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#00D2FF]"
+                  placeholder="Ej. Reality Shop"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                  Enlace Web Único (Slug)
+                </label>
+                <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl overflow-hidden px-3 py-3">
+                  <span className="text-xs text-slate-400 font-semibold">mercadeo.app/</span>
+                  <input
+                    type="text"
+                    required
+                    value={slug}
+                    onChange={(e) => handleSlugChange(e.target.value)}
+                    className="w-full bg-transparent text-slate-800 text-sm font-bold focus:outline-none ml-1"
+                    placeholder="reality-shop"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                  Categoría o Nicho
+                </label>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#00D2FF]"
+                >
+                  <option value="Calzado y Moda">Calzado y Moda</option>
+                  <option value="Electrónica y Tecnología">Electrónica y Tecnología</option>
+                  <option value="Perfumería y Cosmética">Perfumería y Cosmética</option>
+                  <option value="Alimentos y Bebidas">Alimentos y Bebidas</option>
+                  <option value="Servicios Profesionales">Servicios Profesionales</option>
+                  <option value="Otro">Otro</option>
+                </select>
+              </div>
+
+              <button
+                onClick={() => {
+                  if (!businessName || !slug) {
+                    setError('Por favor completa todos los campos requeridos.');
+                    return;
+                  }
+                  setError(null);
+                  setStep(2);
+                }}
+                className="w-full flex justify-center items-center gap-2 py-3.5 px-4 rounded-xl text-white font-bold bg-[#0A2540] hover:bg-slate-800 transition-colors shadow-sm mt-6"
+              >
+                Siguiente Paso <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="space-y-5">
+              <div>
+                <h3 className="text-xl font-black text-[#0A2540]">Canal de Ventas</h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  Agrega tu WhatsApp para recibir los pedidos directos del catálogo
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                  Número de WhatsApp para Pedidos
+                </label>
+                <div className="relative">
+                  <Phone className="w-5 h-5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    required
+                    value={phoneWhatsapp}
+                    onChange={(e) => setPhoneWhatsapp(e.target.value)}
+                    className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#00D2FF]"
+                    placeholder="+584121234567"
+                  />
+                </div>
+                <span className="text-[11px] text-slate-400 mt-1.5 block">
+                  Incluye el código de país (Ej: +58 para Venezuela)
+                </span>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="w-1/3 py-3.5 px-4 rounded-xl text-slate-600 font-bold bg-slate-100 hover:bg-slate-200 transition-colors text-sm"
+                >
+                  Atrás
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!phoneWhatsapp) {
+                      setError('Por favor ingresa tu número de WhatsApp.');
+                      return;
+                    }
+                    setError(null);
+                    setStep(3);
+                  }}
+                  className="w-2/3 flex justify-center items-center gap-2 py-3.5 px-4 rounded-xl text-white font-bold bg-[#0A2540] hover:bg-slate-800 transition-colors shadow-sm"
+                >
+                  Siguiente Paso <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {step === 3 && (
+            <div className="space-y-6">
+              <div className="text-center">
+                <div className="mx-auto w-12 h-12 bg-cyan-50 border border-cyan-200 text-[#00D2FF] rounded-2xl flex items-center justify-center mb-3">
+                  <Sparkles className="w-6 h-6" />
+                </div>
+                <h3 className="text-xl font-black text-[#0A2540]">¡Todo listo para empezar!</h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  Tu prueba gratuita de 14 días incluye acceso a todas las funciones
+                </p>
+              </div>
+
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-3">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+                  <span className="text-xs font-bold text-slate-500 uppercase">Resumen del Plan</span>
+                  <span className="text-sm font-black text-[#22C55E] bg-green-50 border border-green-200 px-2.5 py-0.5 rounded-full">
+                    $0 HOY
+                  </span>
+                </div>
+
+                <ul className="space-y-2 text-xs text-slate-600">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-[#22C55E]" /> 14 Días de acceso ilimitado
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-[#22C55E]" /> Punto de Venta (POS Móvil) & Inventario
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-[#22C55E]" /> Catálogo Web e Integración con WhatsApp
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-[#22C55E]" /> Copiloto de IA para Negocios
+                  </li>
+                </ul>
+
+                <p className="text-[11px] text-slate-400 pt-2 border-t border-slate-200">
+                  Renovación por $19.99/mes mediante Pago Móvil o Binance Pay al terminar la prueba.
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setStep(2)}
+                  className="w-1/3 py-3.5 px-4 rounded-xl text-slate-600 font-bold bg-slate-100 hover:bg-slate-200 transition-colors text-sm"
+                >
+                  Atrás
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCompleteOnboarding}
+                  disabled={loading}
+                  className="w-2/3 flex justify-center items-center gap-2 py-3.5 px-4 rounded-xl text-white font-bold bg-[#0A2540] hover:bg-slate-800 disabled:opacity-50 transition-colors shadow-sm"
+                >
+                  {loading ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <>
+                      Entrar al Dashboard <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="app/(dashboard)/dashboard/ai-copilot/page.tsx">
+'use client';
+
+import { useState } from 'react';
+import { Bot, Send, Loader2, Sparkles, User } from 'lucide-react';
+
+interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export default function CopilotPage() {
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      role: 'assistant',
+      content: '¡Hola! Soy tu Copiloto IA. ¿En qué puedo ayudarte hoy? Puedo analizar tus ventas, darte ideas para promociones o revisar tu inventario.',
+    },
+  ]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || loading) return;
+
+    const userMsg = input.trim();
+    setInput('');
+    setMessages((prev) => [...prev, { role: 'user', content: userMsg }]);
+    setLoading(true);
+
+    try {
+      const res = await fetch('/api/copilot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: userMsg }),
+      });
+
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      setMessages((prev) => [
+        ...prev,
+        { role: 'assistant', content: data.result },
+      ]);
+    } catch (err: any) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: 'Ocurrió un error al procesar tu solicitud. Inténtalo de nuevo.',
+        },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto h-[calc(100vh-6rem)] flex flex-col space-y-4">
+      <div>
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-5 h-5 text-[#00D2FF]" />
+          <h1 className="text-2xl font-black text-[#0A2540]">Copiloto IA</h1>
+        </div>
+        <p className="text-xs text-slate-500 mt-0.5">
+          Tu asistente estratégico para optimizar ventas, precios y promociones.
+        </p>
+      </div>
+
+      {/* Caja de Conversación */}
+      <div className="flex-1 bg-white border border-slate-200 rounded-3xl p-4 shadow-sm flex flex-col justify-between overflow-hidden">
+        <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+          {messages.map((m, idx) => (
+            <div
+              key={idx}
+              className={`flex items-start gap-3 ${
+                m.role === 'user' ? 'flex-row-reverse' : ''
+              }`}
+            >
+              <div
+                className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                  m.role === 'user'
+                    ? 'bg-[#0A2540] text-white'
+                    : 'bg-cyan-50 text-[#00D2FF] border border-cyan-100'
+                }`}
+              >
+                {m.role === 'user' ? (
+                  <User className="w-4 h-4" />
+                ) : (
+                  <Bot className="w-4 h-4" />
+                )}
+              </div>
+
+              <div
+                className={`max-w-[80%] rounded-2xl p-3.5 text-xs whitespace-pre-wrap leading-relaxed ${
+                  m.role === 'user'
+                    ? 'bg-[#0A2540] text-white rounded-tr-none'
+                    : 'bg-slate-50 text-slate-800 border border-slate-100 rounded-tl-none'
+                }`}
+              >
+                {m.content}
+              </div>
+            </div>
+          ))}
+
+          {loading && (
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-xl bg-cyan-50 text-[#00D2FF] border border-cyan-100 flex items-center justify-center shrink-0">
+                <Bot className="w-4 h-4" />
+              </div>
+              <div className="bg-slate-50 border border-slate-100 rounded-2xl rounded-tl-none p-3.5 text-xs text-slate-400 flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin text-[#00D2FF]" />
+                <span>Analizando datos del negocio...</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Input */}
+        <form onSubmit={handleSend} className="pt-3 border-t border-slate-100 flex gap-2">
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Pregúntale algo a tu Copiloto..."
+            className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#00D2FF]"
+          />
+          <button
+            type="submit"
+            disabled={loading || !input.trim()}
+            className="bg-[#0A2540] hover:bg-slate-800 text-white p-3 rounded-xl transition-colors disabled:opacity-50"
+          >
+            <Send className="w-4 h-4 text-[#00D2FF]" />
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="app/(dashboard)/dashboard/inventory/page.tsx">
+'use client';
+
+import { useState, useEffect } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import { uploadProductImage } from '@/lib/supabase/storage';
+import { 
+  PackagePlus, 
+  Search, 
+  Image as ImageIcon, 
+  Loader2, 
+  Plus, 
+  X,
+  Package
+} from 'lucide-react';
+
+interface Product {
+  id: string;
+  name: string;
+  price_usd: number;
+  stock: number;
+  image_url: string | null;
+  category: string | null;
+}
+
+export default function InventoryPage() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // Form State
+  const [name, setName] = useState('');
+  const [price, setPrice] = useState('');
+  const [stock, setStock] = useState('1');
+  const [category, setCategory] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const supabase = createClient();
+
+  const fetchProducts = async () => {
+    setLoading(true);
+    const { data } = await (supabase.from('products') as any)
+      .select('*')
+      .order('created_at', { ascending: false });
+      
+    if (data) setProducts(data);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleSaveProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No autenticado');
+
+      let imageUrl = null;
+      if (imageFile) {
+        imageUrl = await uploadProductImage(imageFile, user.id);
+      }
+
+      const { error } = await (supabase.from('products') as any).insert([
+        {
+          business_id: user.id,
+          name,
+          price_usd: parseFloat(price),
+          stock: parseInt(stock, 10),
+          category: category || null,
+          image_url: imageUrl,
+        },
+      ]);
+
+      if (error) throw error;
+
+      // Limpiar y actualizar
+      setName('');
+      setPrice('');
+      setStock('1');
+      setCategory('');
+      setImageFile(null);
+      setImagePreview(null);
+      setIsModalOpen(false);
+      fetchProducts();
+    } catch (err: any) {
+      alert(err.message || 'Error al guardar el producto');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const filteredProducts = products.filter((p) =>
+    p.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div className="space-y-6 max-w-7xl mx-auto">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-black text-[#0A2540]">Inventario</h1>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Administra tus productos, existencias y catálogo en vivo.
+          </p>
+        </div>
+
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="inline-flex items-center gap-2 bg-[#0A2540] hover:bg-slate-800 text-white text-xs font-bold px-4 py-3 rounded-xl transition-all shadow-sm"
+        >
+          <Plus className="w-4 h-4 text-[#00D2FF]" /> Agregar Producto
+        </button>
+      </div>
+
+      {/* Buscador */}
+      <div className="relative">
+        <Search className="w-4 h-4 text-slate-400 absolute left-4 top-3.5" />
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar producto..."
+          className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#00D2FF]"
+        />
+      </div>
+
+      {/* Tabla / Grid */}
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <Loader2 className="w-6 h-6 text-[#0A2540] animate-spin" />
+        </div>
+      ) : filteredProducts.length === 0 ? (
+        <div className="bg-white border border-slate-200 rounded-3xl p-12 text-center space-y-3">
+          <div className="w-12 h-12 bg-slate-50 text-slate-400 rounded-2xl flex items-center justify-center mx-auto">
+            <Package className="w-6 h-6" />
+          </div>
+          <p className="text-xs font-bold text-slate-700">No hay productos registrados</p>
+          <p className="text-[11px] text-slate-400 max-w-xs mx-auto">
+            Haz clic en "Agregar Producto" para comenzar a armar tu inventario.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {filteredProducts.map((product) => (
+            <div
+              key={product.id}
+              className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col justify-between"
+            >
+              <div className="space-y-3">
+                <div className="w-full h-40 bg-slate-50 rounded-xl overflow-hidden border border-slate-100 flex items-center justify-center relative">
+                  {product.image_url ? (
+                    <img
+                      src={product.image_url}
+                      alt={product.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <ImageIcon className="w-8 h-8 text-slate-300" />
+                  )}
+                </div>
+
+                <div>
+                  <h3 className="text-xs font-bold text-[#0A2540] truncate">
+                    {product.name}
+                  </h3>
+                  {product.category && (
+                    <span className="text-[10px] text-slate-400 font-medium">
+                      {product.category}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                <span className="text-sm font-black text-[#0A2540]">
+                  ${product.price_usd.toFixed(2)}
+                </span>
+                <span
+                  className={`text-[10px] font-bold px-2 py-1 rounded-lg ${
+                    product.stock > 0
+                      ? 'bg-emerald-50 text-emerald-600'
+                      : 'bg-red-50 text-red-600'
+                  }`}
+                >
+                  Stock: {product.stock}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Modal para Crear Producto */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-xl border border-slate-100 relative space-y-5">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h2 className="text-base font-bold text-[#0A2540]">
+                Nuevo Producto
+              </h2>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveProduct} className="space-y-4">
+              {/* Carga de Imagen */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Foto del Producto
+                </label>
+                <div className="flex items-center gap-3">
+                  <div className="w-16 h-16 bg-slate-50 border border-slate-200 rounded-xl overflow-hidden flex items-center justify-center shrink-0">
+                    {imagePreview ? (
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <ImageIcon className="w-6 h-6 text-slate-300" />
+                    )}
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200 cursor-pointer"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Nombre
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#00D2FF]"
+                  placeholder="Ej. Sudadera Oversize"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Precio ($ USD)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#00D2FF]"
+                    placeholder="25.00"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Stock
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    value={stock}
+                    onChange={(e) => setStock(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#00D2FF]"
+                    placeholder="10"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Categoría (Opcional)
+                </label>
+                <input
+                  type="text"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#00D2FF]"
+                  placeholder="Ej. Ropa, Calzado"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={saving}
+                className="w-full flex justify-center items-center gap-2 py-3 px-4 rounded-xl text-white font-bold text-xs bg-[#0A2540] hover:bg-slate-800 disabled:opacity-50 transition-colors mt-2"
+              >
+                {saving ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  'Guardar Producto'
+                )}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+</file>
+
+<file path="app/(dashboard)/dashboard/pos/page.tsx">
+'use client';
+
+import { useState, useEffect } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import { 
+  Search, 
+  ShoppingCart, 
+  Trash2, 
+  Plus, 
+  Minus, 
+  CheckCircle2, 
+  Loader2, 
+  DollarSign, 
+  CreditCard, 
+  Receipt 
+} from 'lucide-react';
+
+interface Product {
+  id: string;
+  name: string;
+  price_usd: number;
+  stock: number;
+  image_url: string | null;
+}
+
+interface CartItem extends Product {
+  quantity: number;
+}
+
+export default function POSPage() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [processing, setProcessing] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'efectivo' | 'pago_movil' | 'zelle'>('efectivo');
+  const [saleSuccess, setSaleSuccess] = useState(false);
+
+  const supabase = createClient();
+
+  const fetchProducts = async () => {
+    setLoading(true);
+    const { data } = await (supabase.from('products') as any)
+      .select('*')
+      .gt('stock', 0)
+      .order('name', { ascending: true });
+
+    if (data) setProducts(data);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const addToCart = (product: Product) => {
+    setCart((prev) => {
+      const existing = prev.find((item) => item.id === product.id);
+      if (existing) {
+        if (existing.quantity >= product.stock) return prev;
+        return prev.map((item) =>
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      }
+      return [...prev, { ...product, quantity: 1 }];
+    });
+  };
+
+  const updateQuantity = (id: string, delta: number) => {
+    setCart((prev) =>
+      prev
+        .map((item) => {
+          if (item.id === id) {
+            const newQty = item.quantity + delta;
+            const originalProduct = products.find((p) => p.id === id);
+            if (newQty <= 0) return null;
+            if (originalProduct && newQty > originalProduct.stock) return item;
+            return { ...item, quantity: newQty };
+          }
+          return item;
+        })
+        .filter(Boolean) as CartItem[]
+    );
+  };
+
+  const removeFromCart = (id: string) => {
+    setCart((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const total = cart.reduce(
+    (sum, item) => sum + item.price_usd * item.quantity,
+    0
+  );
+
+  const handleCheckout = async () => {
+    if (cart.length === 0) return;
+    setProcessing(true);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuario no autenticado');
+
+      // 1. Registrar Orden
+      const { data: order, error: orderError } = await (
+        supabase.from('orders') as any
+      )
+        .insert([
+          {
+            business_id: user.id,
+            total_usd: total,
+            payment_method: paymentMethod,
+            status: 'completed',
+          },
+        ])
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
+      // 2. Registrar items de la orden y actualizar Stock
+      for (const item of cart) {
+        await (supabase.from('order_items') as any).insert([
+          {
+            order_id: order.id,
+            product_id: item.id,
+            quantity: item.quantity,
+            price_usd: item.price_usd,
+          },
+        ]);
+
+        const newStock = item.stock - item.quantity;
+        await (supabase.from('products') as any)
+          .update({ stock: newStock })
+          .eq('id', item.id);
+      }
+
+      setCart([]);
+      setSaleSuccess(true);
+      fetchProducts();
+      setTimeout(() => setSaleSuccess(false), 3000);
+    } catch (err: any) {
+      alert(err.message || 'Error al procesar la venta');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const filteredProducts = products.filter((p) =>
+    p.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-7xl mx-auto h-[calc(100vh-6rem)]">
+      {/* Catálogo de Productos */}
+      <div className="lg:col-span-2 flex flex-col space-y-4">
+        <div>
+          <h1 className="text-2xl font-black text-[#0A2540]">Punto de Venta</h1>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Selecciona productos para armar el pedido de cobro directo.
+          </p>
+        </div>
+
+        <div className="relative">
+          <Search className="w-4 h-4 text-slate-400 absolute left-4 top-3.5" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar por nombre..."
+            className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#00D2FF]"
+          />
+        </div>
+
+        <div className="flex-1 overflow-y-auto pr-1">
+          {loading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="w-6 h-6 text-[#0A2540] animate-spin" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {filteredProducts.map((product) => (
+                <button
+                  key={product.id}
+                  onClick={() => addToCart(product)}
+                  className="bg-white border border-slate-200 hover:border-[#00D2FF] p-3 rounded-2xl text-left transition-all shadow-sm flex flex-col justify-between group"
+                >
+                  <div className="w-full h-24 bg-slate-50 rounded-xl overflow-hidden mb-2 border border-slate-100 flex items-center justify-center">
+                    {product.image_url ? (
+                      <img
+                        src={product.image_url}
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                      />
+                    ) : (
+                      <Receipt className="w-6 h-6 text-slate-300" />
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-bold text-[#0A2540] truncate">
+                      {product.name}
+                    </h3>
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="text-xs font-black text-[#0A2540]">
+                        ${product.price_usd.toFixed(2)}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-medium">
+                        Stock: {product.stock}
+                      </span>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Carrito / Ticket de Cobro */}
+      <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm flex flex-col justify-between">
+        <div className="space-y-4 overflow-hidden flex flex-col">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div className="flex items-center gap-2">
+              <ShoppingCart className="w-4 h-4 text-[#00D2FF]" />
+              <h2 className="text-sm font-bold text-[#0A2540]">
+                Orden de Venta
+              </h2>
+            </div>
+            {cart.length > 0 && (
+              <button
+                onClick={() => setCart([])}
+                className="text-[10px] text-red-500 font-bold hover:underline"
+              >
+                Vaciar
+              </button>
+            )}
+          </div>
+
+          {/* Items Seleccionados */}
+          <div className="flex-1 overflow-y-auto space-y-3 pr-1 min-h-[220px]">
+            {cart.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-center text-slate-400 py-12 space-y-2">
+                <Receipt className="w-8 h-8 stroke-1" />
+                <p className="text-xs">No hay productos en la orden</p>
+              </div>
+            ) : (
+              cart.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl text-xs"
+                >
+                  <div className="flex-1 pr-2 truncate">
+                    <p className="font-bold text-[#0A2540] truncate">
+                      {item.name}
+                    </p>
+                    <p className="text-[10px] text-slate-400">
+                      ${item.price_usd.toFixed(2)} c/u
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center border border-slate-200 rounded-lg bg-white">
+                      <button
+                        onClick={() => updateQuantity(item.id, -1)}
+                        className="p-1 hover:bg-slate-100 text-slate-600 rounded-l-lg"
+                      >
+                        <Minus className="w-3 h-3" />
+                      </button>
+                      <span className="px-2 font-bold text-xs">
+                        {item.quantity}
+                      </span>
+                      <button
+                        onClick={() => updateQuantity(item.id, 1)}
+                        className="p-1 hover:bg-slate-100 text-slate-600 rounded-r-lg"
+                      >
+                        <Plus className="w-3 h-3" />
+                      </button>
+                    </div>
+
+                    <button
+                      onClick={() => removeFromCart(item.id)}
+                      className="text-slate-400 hover:text-red-500 p-1"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Sección de Pago */}
+        <div className="space-y-4 pt-4 border-t border-slate-100 mt-auto">
+          <div>
+            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+              Método de Pago
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { id: 'efectivo', label: 'Efectivo', icon: DollarSign },
+                { id: 'pago_movil', label: 'Pago Móvil', icon: CreditCard },
+                { id: 'zelle', label: 'Zelle', icon: CreditCard },
+              ].map((m) => {
+                const Icon = m.icon;
+                const active = paymentMethod === m.id;
+                return (
+                  <button
+                    key={m.id}
+                    onClick={() => setPaymentMethod(m.id as any)}
+                    className={`flex flex-col items-center gap-1 p-2 rounded-xl border text-[10px] font-bold transition-all ${
+                      active
+                        ? 'border-[#00D2FF] bg-cyan-50/50 text-[#0A2540]'
+                        : 'border-slate-200 text-slate-500 hover:bg-slate-50'
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    <span>{m.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between py-2 border-y border-slate-100">
+            <span className="text-xs font-bold text-slate-500">Total a Cobrar</span>
+            <span className="text-xl font-black text-[#0A2540]">
+              ${total.toFixed(2)}
+            </span>
+          </div>
+
+          {saleSuccess && (
+            <div className="flex items-center gap-2 p-2.5 bg-emerald-50 text-emerald-700 rounded-xl text-xs font-bold">
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <span>¡Venta registrada con éxito!</span>
+            </div>
+          )}
+
+          <button
+            onClick={handleCheckout}
+            disabled={processing || cart.length === 0}
+            className="w-full flex justify-center items-center gap-2 py-3 px-4 rounded-xl text-white font-bold text-xs bg-[#0A2540] hover:bg-slate-800 disabled:opacity-50 transition-colors shadow-sm"
+          >
+            {processing ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              `Completar Venta (${cart.length})`
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="app/(dashboard)/dashboard/settings/page.tsx">
+'use client';
+
+import { useState, useEffect } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import { 
+  Building2, 
+  Phone, 
+  Globe, 
+  CreditCard, 
+  Save, 
+  Loader2, 
+  CheckCircle2 
+} from 'lucide-react';
+
+interface ProfileData {
+  business_name: string;
+  phone: string;
+  slug: string;
+  subscription_status: string;
+  trial_ends_at: string | null;
+}
+
+export default function SettingsPage() {
+  const [profile, setProfile] = useState<ProfileData>({
+    business_name: '',
+    phone: '',
+    slug: '',
+    subscription_status: 'trialing',
+    trial_ends_at: null,
+  });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [successMsg, setSuccessMsg] = useState(false);
+
+  const supabase = createClient();
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user) {
+        const { data } = await (supabase.from('profiles') as any)
+          .select('business_name, phone, slug, subscription_status, trial_ends_at')
+          .eq('id', user.id)
+          .single();
+
+        if (data) {
+          setProfile({
+            business_name: data.business_name || '',
+            phone: data.phone || '',
+            slug: data.slug || '',
+            subscription_status: data.subscription_status || 'trialing',
+            trial_ends_at: data.trial_ends_at || null,
+          });
+        }
+      }
+      setLoading(false);
+    };
+
+    fetchProfile();
+  }, []);
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setSuccessMsg(false);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No autenticado');
+
+      const cleanSlug = profile.slug.toLowerCase().trim().replace(/[^a-z0-9-]/g, '-');
+
+      const { error } = await (supabase.from('profiles') as any)
+        .update({
+          business_name: profile.business_name,
+          phone: profile.phone,
+          slug: cleanSlug,
+        })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      setProfile((prev) => ({ ...prev, slug: cleanSlug }));
+      setSuccessMsg(true);
+      setTimeout(() => setSuccessMsg(false), 3000);
+    } catch (err: any) {
+      alert(err.message || 'Error al guardar la configuración');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-12">
+        <Loader2 className="w-6 h-6 text-[#0A2540] animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-8">
+      <div>
+        <h1 className="text-2xl font-black text-[#0A2540]">Configuración</h1>
+        <p className="text-xs text-slate-500 mt-0.5">
+          Gestiona los datos de tu negocio y la información de tu suscripción.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Formulario de Perfil del Negocio */}
+        <div className="md:col-span-2 bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-5">
+          <h2 className="text-sm font-bold text-[#0A2540] border-b border-slate-100 pb-3">
+            Perfil del Negocio
+          </h2>
+
+          <form onSubmit={handleSave} className="space-y-4">
+            <div>
+              <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                Nombre de la Empresa / Marca
+              </label>
+              <div className="relative">
+                <Building2 className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                <input
+                  type="text"
+                  required
+                  value={profile.business_name}
+                  onChange={(e) =>
+                    setProfile({ ...profile, business_name: e.target.value })
+                  }
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#00D2FF]"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                Teléfono WhatsApp (para recibir pedidos)
+              </label>
+              <div className="relative">
+                <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                <input
+                  type="text"
+                  required
+                  placeholder="+584121234567"
+                  value={profile.phone}
+                  onChange={(e) =>
+                    setProfile({ ...profile, phone: e.target.value })
+                  }
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#00D2FF]"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                Enlace / Slug del Catálogo Público
+              </label>
+              <div className="relative">
+                <Globe className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                <input
+                  type="text"
+                  required
+                  value={profile.slug}
+                  onChange={(e) =>
+                    setProfile({ ...profile, slug: e.target.value })
+                  }
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#00D2FF]"
+                />
+              </div>
+              <span className="text-[10px] text-slate-400 mt-1 block">
+                Tu catálogo estará en: mercadeo.app/{profile.slug}
+              </span>
+            </div>
+
+            {successMsg && (
+              <div className="flex items-center gap-2 p-3 bg-emerald-50 text-emerald-700 rounded-xl text-xs font-bold">
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <span>¡Cambios guardados con éxito!</span>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={saving}
+              className="flex items-center justify-center gap-2 w-full py-3 bg-[#0A2540] hover:bg-slate-800 text-white font-bold text-xs rounded-xl transition-colors disabled:opacity-50"
+            >
+              {saving ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  <Save className="w-4 h-4 text-[#00D2FF]" />
+                  <span>Guardar Cambios</span>
+                </>
+              )}
+            </button>
+          </form>
+        </div>
+
+        {/* Tarjeta de Suscripción */}
+        <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm flex flex-col justify-between space-y-4">
+          <div>
+            <div className="flex items-center gap-2 text-[#0A2540] font-bold text-sm border-b border-slate-100 pb-3">
+              <CreditCard className="w-4 h-4 text-[#00D2FF]" />
+              <span>Suscripción</span>
+            </div>
+
+            <div className="mt-4 space-y-3">
+              <div>
+                <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block">
+                  Estado
+                </span>
+                <span className="inline-block mt-1 px-2.5 py-1 rounded-lg text-xs font-bold uppercase bg-emerald-50 text-emerald-600">
+                  {profile.subscription_status === 'trialing'
+                    ? 'Prueba Gratuita'
+                    : profile.subscription_status}
+                </span>
+              </div>
+
+              <div>
+                <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block">
+                  Costo Mensual
+                </span>
+                <span className="text-xl font-black text-[#0A2540]">$5.99 / mes</span>
+              </div>
+
+              {profile.trial_ends_at && (
+                <div>
+                  <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block">
+                    Vencimiento de Prueba
+                  </span>
+                  <span className="text-xs font-semibold text-slate-700">
+                    {new Date(profile.trial_ends_at).toLocaleDateString()}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="pt-4 border-t border-slate-100">
+            <p className="text-[11px] text-slate-400 leading-relaxed">
+              Para renovar tu suscripción por Pago Móvil o Zelle, ponte en contacto con nuestro equipo de soporte.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="app/(dashboard)/layout.tsx">
+import { redirect } from 'next/navigation';
+import { createClient } from '@/lib/supabase/server';
+import { SidebarNav } from '@/components/layout/sidebar-nav';
+
+export default async function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect('/login');
+  }
+
+  const { data: profile } = await (supabase.from('profiles') as any)
+    .select('business_name, slug')
+    .eq('id', user.id)
+    .single();
+
+  return (
+    <div className="min-h-screen bg-[#F8FAFC] flex">
+      <SidebarNav
+        businessName={profile?.business_name}
+        slug={profile?.slug}
+      />
+      <main className="flex-1 p-8 overflow-y-auto max-h-screen">
+        {children}
+      </main>
+    </div>
+  );
+}
+</file>
+
+<file path="app/(public)/[slug]/page.tsx">
+'use client';
+
+import { useState, useEffect, use } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import { 
+  ShoppingBag, 
+  Search, 
+  Plus, 
+  Minus, 
+  Trash2, 
+  MessageCircle, 
+  Store, 
+  Loader2 
+} from 'lucide-react';
+
+interface BusinessProfile {
+  id: string;
+  business_name: string;
+  phone: string | null;
+  slug: string;
+}
+
+interface Product {
+  id: string;
+  name: string;
+  price_usd: number;
+  stock: number;
+  image_url: string | null;
+  category: string | null;
+}
+
+interface CartItem extends Product {
+  quantity: number;
+}
+
+export default function PublicCatalogPage({ params }: { params: Promise<{ slug: string }> }) {
+  const resolvedParams = use(params);
+  const [profile, setProfile] = useState<BusinessProfile | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+
+  const supabase = createClient();
+
+  useEffect(() => {
+    const fetchCatalog = async () => {
+      setLoading(true);
+
+      // 1. Obtener perfil del comercio
+      const { data: businessData, error } = await (supabase.from('profiles') as any)
+        .select('id, business_name, phone, slug')
+        .eq('slug', resolvedParams.slug)
+        .single();
+
+      if (error || !businessData) {
+        setNotFound(true);
+        setLoading(false);
+        return;
+      }
+
+      setProfile(businessData);
+
+      // 2. Obtener productos con stock disponible
+      const { data: productsData } = await (supabase.from('products') as any)
+        .select('*')
+        .eq('business_id', businessData.id)
+        .gt('stock', 0)
+        .order('created_at', { ascending: false });
+
+      if (productsData) setProducts(productsData);
+      setLoading(false);
+    };
+
+    fetchCatalog();
+  }, [resolvedParams.slug]);
+
+  const addToCart = (product: Product) => {
+    setCart((prev) => {
+      const existing = prev.find((item) => item.id === product.id);
+      if (existing) {
+        if (existing.quantity >= product.stock) return prev;
+        return prev.map((item) =>
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      }
+      return [...prev, { ...product, quantity: 1 }];
+    });
+  };
+
+  const updateQuantity = (id: string, delta: number) => {
+    setCart((prev) =>
+      prev
+        .map((item) => {
+          if (item.id === id) {
+            const newQty = item.quantity + delta;
+            const originalProduct = products.find((p) => p.id === id);
+            if (newQty <= 0) return null;
+            if (originalProduct && newQty > originalProduct.stock) return item;
+            return { ...item, quantity: newQty };
+          }
+          return item;
+        })
+        .filter(Boolean) as CartItem[]
+    );
+  };
+
+  const total = cart.reduce(
+    (sum, item) => sum + item.price_usd * item.quantity,
+    0
+  );
+
+  const handleSendWhatsApp = () => {
+    if (!profile?.phone || cart.length === 0) return;
+
+    let message = `¡Hola *${profile.business_name}*! Quisiera hacer el siguiente pedido:\n\n`;
+
+    cart.forEach((item) => {
+      message += `• ${item.quantity}x ${item.name} - $${(item.price_usd * item.quantity).toFixed(2)}\n`;
+    });
+
+    message += `\n*Total a pagar:* $${total.toFixed(2)}`;
+
+    const cleanPhone = profile.phone.replace(/[^0-9]/g, '');
+    const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank');
+  };
+
+  const filteredProducts = products.filter((p) =>
+    p.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-[#0A2540] animate-spin" />
+      </div>
+    );
+  }
+
+  if (notFound) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-4 text-center">
+        <Store className="w-12 h-12 text-slate-300 mb-3" />
+        <h1 className="text-lg font-bold text-[#0A2540]">Catálogo no encontrado</h1>
+        <p className="text-xs text-slate-500 mt-1">El negocio que buscas no existe o cambió de dirección.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#F8FAFC] pb-28">
+      {/* Header del Negocio */}
+      <header className="bg-[#0A2540] text-white py-8 px-4 text-center sticky top-0 z-10 shadow-md">
+        <span className="text-[#00D2FF] font-black text-xs uppercase tracking-widest block mb-1">
+          Catálogo Digital
+        </span>
+        <h1 className="text-2xl font-black">{profile?.business_name}</h1>
+      </header>
+
+      {/* Buscador y Contenido */}
+      <main className="max-w-4xl mx-auto p-4 space-y-6 mt-2">
+        <div className="relative">
+          <Search className="w-4 h-4 text-slate-400 absolute left-4 top-3.5" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar productos..."
+            className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#00D2FF] shadow-sm"
+          />
+        </div>
+
+        {/* Galería de Productos */}
+        {filteredProducts.length === 0 ? (
+          <div className="text-center py-12 text-slate-400 space-y-2">
+            <ShoppingBag className="w-10 h-10 stroke-1 mx-auto" />
+            <p className="text-xs font-semibold">No hay productos disponibles por ahora.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            {filteredProducts.map((product) => {
+              const inCart = cart.find((item) => item.id === product.id);
+
+              return (
+                <div
+                  key={product.id}
+                  className="bg-white border border-slate-200 rounded-2xl p-3 shadow-sm flex flex-col justify-between"
+                >
+                  <div className="space-y-2">
+                    <div className="w-full h-36 bg-slate-50 rounded-xl overflow-hidden border border-slate-100 flex items-center justify-center">
+                      {product.image_url ? (
+                        <img
+                          src={product.image_url}
+                          alt={product.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <ShoppingBag className="w-8 h-8 text-slate-300" />
+                      )}
+                    </div>
+                    <h3 className="text-xs font-bold text-[#0A2540] truncate">
+                      {product.name}
+                    </h3>
+                  </div>
+
+                  <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
+                    <span className="text-sm font-black text-[#0A2540]">
+                      ${product.price_usd.toFixed(2)}
+                    </span>
+
+                    {inCart ? (
+                      <div className="flex items-center border border-slate-200 rounded-xl bg-slate-50">
+                        <button
+                          onClick={() => updateQuantity(product.id, -1)}
+                          className="p-1 hover:bg-slate-200 text-slate-700 rounded-l-xl"
+                        >
+                          <Minus className="w-3 h-3" />
+                        </button>
+                        <span className="px-2 text-xs font-bold">
+                          {inCart.quantity}
+                        </span>
+                        <button
+                          onClick={() => updateQuantity(product.id, 1)}
+                          className="p-1 hover:bg-slate-200 text-slate-700 rounded-r-xl"
+                        >
+                          <Plus className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => addToCart(product)}
+                        className="p-2 bg-[#0A2540] hover:bg-slate-800 text-[#00D2FF] rounded-xl transition-colors"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </main>
+
+      {/* Bar Flotante de Resumen y WhatsApp */}
+      {cart.length > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 shadow-2xl z-20">
+          <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
+            <div>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                {cart.length} producto(s)
+              </span>
+              <span className="text-lg font-black text-[#0A2540]">
+                ${total.toFixed(2)}
+              </span>
+            </div>
+
+            <button
+              onClick={handleSendWhatsApp}
+              disabled={!profile?.phone}
+              className="flex items-center gap-2 bg-[#25D366] hover:bg-emerald-600 text-white text-xs font-bold px-5 py-3 rounded-xl transition-all shadow-md disabled:opacity-50"
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span>Pedir por WhatsApp</span>
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+</file>
+
+<file path="app/api/billing/expired/page.tsx">
+'use client';
+
+import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
+import { ShieldAlert, CreditCard, LogOut, MessageCircle } from 'lucide-react';
+
+export default function BillingExpiredPage() {
+  const router = useRouter();
+  const supabase = createClient();
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.push('/login');
+    router.refresh();
+  };
+
+  return (
+    <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-4">
+      <div className="bg-white border border-slate-200 rounded-3xl p-8 max-w-md w-full shadow-xl text-center space-y-6">
+        <div className="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mx-auto">
+          <ShieldAlert className="w-8 h-8" />
+        </div>
+
+        <div>
+          <h1 className="text-xl font-black text-[#0A2540]">
+            Prueba Finalizada
+          </h1>
+          <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+            Tu período de prueba gratuita de 14 días ha expirado. Para seguir usando **MERCADEO** (POS, Inventario y Catálogo Web) debes activar tu suscripción mensual de **$5.99**.
+          </p>
+        </div>
+
+        <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 text-left space-y-2">
+          <div className="flex justify-between text-xs font-bold text-[#0A2540]">
+            <span>Plan Mercadeo Pro</span>
+            <span>$5.99 USD / mes</span>
+          </div>
+          <p className="text-[10px] text-slate-400">
+            Aceptamos Pago Móvil (tasa oficial BCV) y Zelle.
+          </p>
+        </div>
+
+        <div className="space-y-3">
+          <a
+            href="https://wa.me/584120000000?text=Hola,%20quiero%20activar%20mi%20suscripción%20de%20Mercadeo"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 w-full py-3 bg-[#25D366] hover:bg-emerald-600 text-white font-bold text-xs rounded-xl transition-colors shadow-md"
+          >
+            <MessageCircle className="w-4 h-4" />
+            <span>Pagar por WhatsApp</span>
+          </a>
+
+          <button
+            onClick={handleSignOut}
+            className="flex items-center justify-center gap-2 w-full py-2.5 text-xs font-bold text-slate-500 hover:text-slate-700"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Cerrar Sesión</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="app/api/billing/submit-payment/route.ts">
+import { NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+import { submitSubscriptionPayment } from '@/lib/payments';
+
+export async function POST(req: Request) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
+    const { paymentMethod, referenceCode } = await req.json();
+
+    if (!paymentMethod || !referenceCode) {
+      return NextResponse.json(
+        { error: 'El método de pago y el número de referencia son obligatorios' },
+        { status: 400 }
+      );
+    }
+
+    const payment = await submitSubscriptionPayment({
+      businessId: user.id,
+      paymentMethod,
+      referenceCode,
+      amountUsd: 5.99,
+    });
+
+    return NextResponse.json({ success: true, payment });
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: error.message || 'Error al procesar el pago' },
+      { status: 500 }
+    );
+  }
+}
+</file>
+
+<file path="app/api/copilot/route.ts">
+import { NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+
+export async function POST(req: Request) {
+  try {
+    const { prompt } = await req.json();
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
+    // Obtener contexto actual del negocio para alimentar al copiloto
+    const [{ data: profile }, { data: products }, { data: orders }] = await Promise.all([
+      (supabase.from('profiles') as any).select('*').eq('id', user.id).single(),
+      (supabase.from('products') as any).select('*').eq('business_id', user.id),
+      (supabase.from('orders') as any).select('*').eq('business_id', user.id).limit(20),
+    ]);
+
+    const context = `
+      Negocio: ${profile?.business_name || 'Comercio'}
+      Productos totales: ${products?.length || 0}
+      Órdenes recientes: ${orders?.length || 0}
+    `;
+
+    // Respuesta estructurada de análisis rápido
+    const responseMessage = `Analizando tu negocio *${profile?.business_name || 'Comercio'}*:\n\n` +
+      `• **Inventario:** Tienes ${products?.length || 0} productos registrados.\n` +
+      `• **Ventas:** Se registran ${orders?.length || 0} órdenes recientes.\n\n` +
+      `**Sugerencia:** ${
+        products?.length === 0 
+          ? 'Carga más productos a tu inventario para aumentar el alcance de tu catálogo público.' 
+          : 'Promociona tus productos con menor stock en tus historias de WhatsApp para rotar inventario.'
+      }`;
+
+    return NextResponse.json({ result: responseMessage });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || 'Error en Copiloto' }, { status: 500 });
+  }
+}
+</file>
+
+<file path="app/billing/expired/page.tsx">
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { 
+  ShieldAlert, 
+  QrCode, 
+  Smartphone, 
+  Copy, 
+  Check, 
+  Loader2, 
+  ArrowRight,
+  Clock
+} from 'lucide-react';
+
+export default function BillingExpiredPage() {
+  const [method, setMethod] = useState<'mobile_pay' | 'binance_pay'>('mobile_pay');
+  const [referenceCode, setReferenceCode] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [copied, setCopied] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const router = useRouter();
+
+  const handleCopy = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(label);
+    setTimeout(() => setCopied(null), 2000);
+  };
+
+  const handleSubmitPayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      const res = await fetch('/api/billing/submit-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          paymentMethod: method,
+          referenceCode,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || 'Error al enviar el reporte.');
+
+      setSubmitted(true);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-xl">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-14 h-14 bg-amber-50 border border-amber-200 text-amber-600 rounded-2xl shadow-sm mb-4">
+            <ShieldAlert className="w-7 h-7" />
+          </div>
+          <h2 className="text-3xl font-black text-[#0A2540] tracking-tight">
+            Tu período de prueba ha finalizado
+          </h2>
+          <p className="mt-2 text-sm text-slate-500 max-w-md mx-auto">
+            Renueva tu suscripción por <strong className="text-slate-800">$5.99/mes</strong> para reactivar tu Punto de Venta, Inventario y Catálogo Web.
+          </p>
+        </div>
+
+        <div className="bg-white py-8 px-6 shadow-sm border border-slate-200 rounded-3xl sm:px-10">
+          {submitted ? (
+            <div className="text-center py-6 space-y-4">
+              <div className="w-12 h-12 bg-green-50 border border-green-200 text-[#22C55E] rounded-full flex items-center justify-center mx-auto">
+                <Clock className="w-6 h-6 animate-pulse" />
+              </div>
+              <h3 className="text-xl font-bold text-[#0A2540]">Pago en Verificación</h3>
+              <p className="text-xs text-slate-500 leading-relaxed max-w-sm mx-auto">
+                Hemos recibido tu reporte de referencia <strong>#{referenceCode}</strong>. El equipo validará el abono y tu acceso se reactivará automáticamente en breve.
+              </p>
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="mt-4 inline-flex items-center gap-2 py-3 px-6 rounded-xl text-xs font-bold text-white bg-[#0A2540] hover:bg-slate-800 transition-colors"
+              >
+                Volver al Inicio <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmitPayment} className="space-y-6">
+              {error && (
+                <div className="p-3.5 text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl font-medium">
+                  {error}
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setMethod('mobile_pay')}
+                  className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all ${
+                    method === 'mobile_pay'
+                      ? 'border-[#00D2FF] bg-cyan-50/30 ring-2 ring-cyan-100'
+                      : 'border-slate-200 bg-slate-50 hover:bg-slate-100'
+                  }`}
+                >
+                  <Smartphone className="w-5 h-5 text-[#0A2540] mb-2" />
+                  <span className="text-xs font-bold text-[#0A2540]">Pago Móvil</span>
+                  <span className="text-[10px] text-slate-400">Bolívares (BCV)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setMethod('binance_pay')}
+                  className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all ${
+                    method === 'binance_pay'
+                      ? 'border-[#00D2FF] bg-cyan-50/30 ring-2 ring-cyan-100'
+                      : 'border-slate-200 bg-slate-50 hover:bg-slate-100'
+                  }`}
+                >
+                  <QrCode className="w-5 h-5 text-[#0A2540] mb-2" />
+                  <span className="text-xs font-bold text-[#0A2540]">Binance Pay</span>
+                  <span className="text-[10px] text-slate-400">USDT Directo</span>
+                </button>
+              </div>
+
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+                  <span className="text-xs font-bold text-slate-500 uppercase">Datos de Recepción</span>
+                  <span className="text-xs font-black text-[#0A2540]">$5.99 USD</span>
+                </div>
+
+                {method === 'mobile_pay' ? (
+                  <div className="space-y-2 text-xs text-slate-700">
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-400">Banco:</span>
+                      <span className="font-bold">Banesco (0134)</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-400">Teléfono:</span>
+                      <button
+                        type="button"
+                        onClick={() => handleCopy('0414-5623930', 'phone')}
+                        className="font-bold flex items-center gap-1 hover:text-[#00D2FF]"
+                      >
+                        0414-5623930 {copied === 'phone' ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
+                      </button>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-400">RIF / C.I.:</span>
+                      <button
+                        type="button"
+                        onClick={() => handleCopy('V-26428927', 'C.I')}
+                        className="font-bold flex items-center gap-1 hover:text-[#00D2FF]"
+                      >
+                        V-26428927 {copied === 'C.I' ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2 text-xs text-slate-700">
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-400">Binance ID:</span>
+                      <button
+                        type="button"
+                        onClick={() => handleCopy('467865887', 'binance_id')}
+                        className="font-bold flex items-center gap-1 hover:text-[#00D2FF]"
+                      >
+                        467865887 {copied === 'binance_id' ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
+                      </button>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-400">Red:</span>
+                      <span className="font-bold">Pay (USDT)</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                  Número de Referencia
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={referenceCode}
+                  onChange={(e) => setReferenceCode(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#00D2FF]"
+                  placeholder={method === 'mobile_pay' ? 'Ej. 004920' : 'Ej. 392019482'}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full flex justify-center items-center gap-2 py-3.5 px-4 rounded-xl text-white font-bold bg-[#0A2540] hover:bg-slate-800 disabled:opacity-50 transition-colors shadow-sm"
+              >
+                {loading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <>
+                    Reportar Pago <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="lib/supabase/storage.ts">
+import { createClient } from '@/lib/supabase/client';
+
+export async function uploadProductImage(file: File, userId: string): Promise<string> {
+  const supabase = createClient();
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${userId}/${Date.now()}.${fileExt}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from('products')
+    .upload(fileName, file, {
+      cacheControl: '3600',
+      upsert: true,
+    });
+
+  if (uploadError) throw uploadError;
+
+  const { data } = supabase.storage
+    .from('products')
+    .getPublicUrl(fileName);
+
+  return data.publicUrl;
+}
+</file>
+
+<file path="lib/payments.ts">
+import { createClient } from '@/lib/supabase/server';
+
+export async function submitSubscriptionPayment({
+  businessId,
+  paymentMethod,
+  referenceCode,
+  amountUsd = 5.99,
+}: {
+  businessId: string;
+  paymentMethod: 'mobile_pay' | 'binance_pay';
+  referenceCode: string;
+  amountUsd?: number;
+}) {
+  const supabase = await createClient();
+
+  const { data, error } = await (supabase.from('subscription_payments') as any)
+    .insert([
+      {
+        business_id: businessId,
+        payment_method: paymentMethod,
+        reference_code: referenceCode,
+        amount_usd: amountUsd,
+        status: 'pending',
+      },
+    ])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function approveSubscriptionPayment(paymentId: string) {
+  const supabase = await createClient();
+
+  const { data: payment, error: fetchError } = await (
+    supabase.from('subscription_payments') as any)
+    .select('business_id')
+    .eq('id', paymentId)
+    .single();
+
+  if (fetchError || !payment) throw new Error('Pago no encontrado');
+
+  await (supabase.from('subscription_payments') as any)
+    .update({ status: 'approved' })
+    .eq('id', paymentId);
+
+  const newTrialEnds = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+  await (supabase.from('profiles') as any)
+    .update({
+      subscription_status: 'active',
+      trial_ends_at: newTrialEnds,
+    })
+    .eq('id', payment.business_id);
+
+  return true;
+}
+</file>
+
+<file path="app/(auth)/login/page.tsx">
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { createClient } from '@/lib/supabase/client';
+import { Store, ArrowRight, Loader2, Lock, Mail } from 'lucide-react';
+
+export default function LoginPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const router = useRouter();
+  const supabase = createClient();
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      setError(error.message);
+      setLoading(false);
+    } else {
+      router.push('/dashboard');
+      router.refresh();
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
+        <div className="inline-flex items-center justify-center w-12 h-12 bg-[#0A2540] text-[#00D2FF] rounded-2xl shadow-md mb-4">
+          <Store className="w-6 h-6" />
+        </div>
+        <h2 className="text-3xl font-black text-[#0A2540] tracking-tight">
+          Inicia sesión en MERCADEO
+        </h2>
+        <p className="mt-2 text-sm text-slate-500">
+          Gestiona tu inventario, ventas POS y catálogo digital
+        </p>
+      </div>
+
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-8 px-6 shadow-sm border border-slate-200 rounded-3xl sm:px-10">
+          <form className="space-y-5" onSubmit={handleLogin}>
+            {error && (
+              <div className="p-3.5 text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl font-medium">
+                {error}
+              </div>
+            )}
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                Correo Electrónico
+              </label>
+              <div className="relative">
+                <Mail className="w-5 h-5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#00D2FF] focus:bg-white transition-all"
+                  placeholder="tu@negocio.com"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                Contraseña
+              </label>
+              <div className="relative">
+                <Lock className="w-5 h-5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#00D2FF] focus:bg-white transition-all"
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full flex justify-center items-center gap-2 py-3.5 px-4 rounded-xl text-white font-bold bg-[#0A2540] hover:bg-slate-800 disabled:opacity-50 transition-colors shadow-sm"
+            >
+              {loading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <>
+                  Entrar al Panel <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+          </form>
+
+          <div className="mt-6 text-center text-xs text-slate-500">
+            ¿No tienes una cuenta aún?{' '}
+            <Link href="/register" className="font-bold text-[#0A2540] hover:underline">
+              Regístrate gratis aquí
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="app/(auth)/register/page.tsx">
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { createClient } from '@/lib/supabase/client';
+import { Store, ArrowRight, Loader2, Lock, Mail } from 'lucide-react';
+
+export default function RegisterPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const router = useRouter();
+  const supabase = createClient();
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+
+    if (error) {
+      setError(error.message);
+      setLoading(false);
+    } else if (data.user) {
+      await (supabase.from('profiles') as any).insert([
+  {
+    id: data.user.id,
+    business_name: '',
+    subscription_status: 'trialing',
+  },
+]);
+
+      router.push('/onboarding');
+      router.refresh();
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
+        <div className="inline-flex items-center justify-center w-12 h-12 bg-[#0A2540] text-[#00D2FF] rounded-2xl shadow-md mb-4">
+          <Store className="w-6 h-6" />
+        </div>
+        <h2 className="text-3xl font-black text-[#0A2540] tracking-tight">
+          Crea tu cuenta en MERCADEO
+        </h2>
+        <p className="mt-2 text-sm text-slate-500">
+          Comienza tu prueba gratuita de 14 días sin tarjetas de crédito
+        </p>
+      </div>
+
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-8 px-6 shadow-sm border border-slate-200 rounded-3xl sm:px-10">
+          <form className="space-y-5" onSubmit={handleRegister}>
+            {error && (
+              <div className="p-3.5 text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl font-medium">
+                {error}
+              </div>
+            )}
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                Correo Electrónico
+              </label>
+              <div className="relative">
+                <Mail className="w-5 h-5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#00D2FF] focus:bg-white transition-all"
+                  placeholder="tu@negocio.com"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                Contraseña
+              </label>
+              <div className="relative">
+                <Lock className="w-5 h-5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#00D2FF] focus:bg-white transition-all"
+                  placeholder="Mínimo 6 caracteres"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full flex justify-center items-center gap-2 py-3.5 px-4 rounded-xl text-white font-bold bg-[#0A2540] hover:bg-slate-800 disabled:opacity-50 transition-colors shadow-sm"
+            >
+              {loading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <>
+                  Crear Cuenta Gratis <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+          </form>
+
+          <div className="mt-6 text-center text-xs text-slate-500">
+            ¿Ya tienes una cuenta?{' '}
+            <Link href="/login" className="font-bold text-[#0A2540] hover:underline">
+              Inicia sesión
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="app/(dashboard)/copilot/page.tsx">
+import { Bot, Send } from "lucide-react";
+
+import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+
+export const metadata = {
+  title: "AI Copilot",
+};
+
+export default function CopilotPage() {
+  return (
+    <DashboardShell>
+      <div className="flex h-[calc(100vh-8rem)] flex-col space-y-4">
+        <div>
+          <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
+            <Bot className="size-6" />
+            AI Copilot
+          </h1>
+          <p className="text-muted-foreground">
+            Ask questions about your business, get insights, and automate tasks.
+          </p>
+        </div>
+
+        <Card className="flex flex-1 flex-col">
+          <CardHeader>
+            <CardTitle>Business assistant</CardTitle>
+            <CardDescription>
+              The copilot has access to your inventory, orders, and customer data.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-1 flex-col justify-between gap-4">
+            <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed bg-muted/30 p-8 text-center">
+              <div>
+                <Badge variant="secondary" className="mb-3">
+                  Coming soon
+                </Badge>
+                <p className="text-sm text-muted-foreground">
+                  Connect an AI provider and Supabase to enable conversational
+                  business intelligence.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Input placeholder="Ask about sales, inventory, or customers..." />
+              <Button size="icon">
+                <Send className="size-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </DashboardShell>
+  );
+}
+</file>
+
+<file path="app/(dashboard)/customers/page.tsx">
+import { Users } from "lucide-react";
+
+import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
+export const metadata = {
+  title: "Customers",
+};
+
+export default function CustomersPage() {
+  return (
+    <DashboardShell>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Customers</h1>
+          <p className="text-muted-foreground">
+            Manage customer profiles, contact info, and purchase history.
+          </p>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="size-5" />
+              Customer list
+            </CardTitle>
+            <CardDescription>
+              Customers are created automatically from orders or added manually.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Badge variant="secondary">No customers yet</Badge>
+          </CardContent>
+        </Card>
+      </div>
+    </DashboardShell>
+  );
+}
+</file>
+
+<file path="app/(dashboard)/dashboard/page.tsx">
+import { createClient } from '@/lib/supabase/server';
+import { 
+  TrendingUp, 
+  Package, 
+  ShoppingBag, 
+  ArrowUpRight, 
+  Store 
+} from 'lucide-react';
+import Link from 'next/link';
+
+export default async function DashboardPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  const { data: profile } = await (supabase.from('profiles') as any)
+    .select('*')
+    .eq('id', user?.id)
+    .single();
+
+  return (
+    <div className="space-y-8 max-w-7xl mx-auto">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-black text-[#0A2540]">
+            ¡Hola, {profile?.business_name || 'Comerciante'}! 👋
+          </h1>
+          <p className="text-xs text-slate-500 mt-1">
+            Aquí tienes el resumen de tu negocio en tiempo real.
+          </p>
+        </div>
+
+        <Link
+          href="/dashboard/pos"
+          className="inline-flex items-center gap-2 bg-[#0A2540] hover:bg-slate-800 text-white text-xs font-bold px-5 py-3 rounded-xl transition-all shadow-sm"
+        >
+          <ShoppingBag className="w-4 h-4 text-[#00D2FF]" /> Nueva Venta POS
+        </Link>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              Ventas Hoy
+            </span>
+            <div className="p-2 bg-emerald-50 text-[#22C55E] rounded-xl">
+              <TrendingUp className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="text-2xl font-black text-[#0A2540]">$0.00</div>
+          <span className="text-[11px] text-slate-400 block">
+            0 transacciones registradas
+          </span>
+        </div>
+
+        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              Productos en Stock
+            </span>
+            <div className="p-2 bg-cyan-50 text-[#00D2FF] rounded-xl">
+              <Package className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="text-2xl font-black text-[#0A2540]">0</div>
+          <Link
+            href="/dashboard/inventory"
+            className="text-[11px] font-bold text-[#0A2540] hover:underline flex items-center gap-1"
+          >
+            Gestionar inventario <ArrowUpRight className="w-3 h-3" />
+          </Link>
+        </div>
+
+        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              Estado del Plan
+            </span>
+            <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+              <Store className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="text-2xl font-black text-[#0A2540] capitalize">
+            {profile?.subscription_status === 'trialing' ? 'Prueba Gratis' : 'Activo'}
+          </div>
+          <span className="text-[11px] text-slate-400 block">
+            Suscripción mensual: $5.99
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="app/(dashboard)/orders/page.tsx">
+import { ShoppingCart } from "lucide-react";
+
+import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
+export const metadata = {
+  title: "Orders",
+};
+
+export default function OrdersPage() {
+  return (
+    <DashboardShell>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Orders</h1>
+          <p className="text-muted-foreground">
+            Track and fulfill orders from your catalog and manual entries.
+          </p>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ShoppingCart className="size-5" />
+              All orders
+            </CardTitle>
+            <CardDescription>
+              Orders from manual entry, catalog, and imports appear here.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Badge variant="secondary">No orders yet</Badge>
+          </CardContent>
+        </Card>
+      </div>
+    </DashboardShell>
+  );
+}
+</file>
+
+<file path="app/(dashboard)/settings/page.tsx">
+import { DashboardShell } from "@/components/layout/dashboard-shell";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+export const metadata = {
+  title: "Settings",
+};
+
+export default function SettingsPage() {
+  return (
+    <DashboardShell>
+      <div className="mx-auto max-w-2xl space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+          <p className="text-muted-foreground">
+            Manage your business profile and catalog preferences.
+          </p>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Business profile</CardTitle>
+            <CardDescription>
+              This information appears on your public catalog.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Business name</Label>
+              <Input id="name" placeholder="My Store" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="slug">Catalog URL slug</Label>
+              <Input id="slug" placeholder="my-store" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Contact email</Label>
+              <Input id="email" type="email" placeholder="hello@business.com" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </DashboardShell>
+  );
+}
+</file>
+
+<file path="components/layout/dashboard-shell.tsx">
+import Link from "next/link";
+import { Store } from "lucide-react";
+
+import { SidebarNav } from "@/components/layout/sidebar-nav";
+import { Separator } from "@/components/ui/separator";
+
+export function DashboardShell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex min-h-screen">
+      <aside className="hidden w-64 shrink-0 border-r bg-sidebar md:flex md:flex-col">
+        <div className="flex h-14 items-center gap-2 border-b px-4">
+          <Store className="size-5" />
+          <Link href="/dashboard" className="font-semibold tracking-tight">
+            MERCADEO
+          </Link>
+        </div>
+        <div className="flex-1 overflow-y-auto p-4">
+          <SidebarNav />
+        </div>
+        <Separator />
+        <div className="p-4">
+          <Link
+            href="/settings"
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
+            Settings
+          </Link>
+        </div>
+      </aside>
+      <div className="flex flex-1 flex-col">
+        <header className="flex h-14 items-center border-b px-4 md:px-6">
+          <Link href="/dashboard" className="font-semibold md:hidden">
+            MERCADEO
+          </Link>
+        </header>
+        <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="components/layout/sidebar-nav.tsx">
+'use client';
+
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
+import {
+  LayoutDashboard,
+  ShoppingBag,
+  Package,
+  Store,
+  Bot,
+  LogOut,
+  ExternalLink,
+} from 'lucide-react';
+
+interface SidebarNavProps {
+  businessName?: string;
+  slug?: string;
+}
+
+export function SidebarNav({ businessName = 'Mi Negocio', slug }: SidebarNavProps) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const supabase = createClient();
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.push('/login');
+    router.refresh();
+  };
+
+  const menuItems = [
+    {
+      name: 'Resumen',
+      href: '/dashboard',
+      icon: LayoutDashboard,
+    },
+    {
+      name: 'Punto de Venta (POS)',
+      href: '/dashboard/pos',
+      icon: ShoppingBag,
+    },
+    {
+      name: 'Inventario',
+      href: '/dashboard/inventory',
+      icon: Package,
+    },
+    {
+      name: 'Mi Catálogo Web',
+      href: '/dashboard/catalog',
+      icon: Store,
+    },
+    {
+      name: 'Copiloto IA',
+      href: '/dashboard/ai-copilot',
+      icon: Bot,
+    },
+  ];
+
+  return (
+    <aside className="w-64 bg-[#0A2540] text-white flex flex-col justify-between h-screen sticky top-0 border-r border-slate-800">
+      <div>
+        <div className="p-6 border-b border-slate-800 flex items-center justify-between">
+          <div>
+            <span className="text-[#00D2FF] font-black text-xl tracking-wider block">
+              MERCADEO
+            </span>
+            <span className="text-[11px] text-slate-400 font-semibold truncate max-w-[170px] block">
+              {businessName}
+            </span>
+          </div>
+        </div>
+
+        <nav className="p-4 space-y-1.5">
+          {menuItems.map((item) => {
+            const isActive = pathname === item.href;
+            const Icon = item.icon;
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all ${
+                  isActive
+                    ? 'bg-[#00D2FF] text-[#0A2540] shadow-sm'
+                    : 'text-slate-300 hover:bg-slate-800/60 hover:text-white'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                <span>{item.name}</span>
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+
+      <div className="p-4 border-t border-slate-800 space-y-2">
+        {slug && (
+          <a
+            href={`https://mercadeo.app/${slug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-between w-full px-4 py-2.5 bg-slate-800/50 hover:bg-slate-800 rounded-xl text-[11px] font-bold text-cyan-300 transition-colors"
+          >
+            <span className="truncate">Ver Catálogo Público</span>
+            <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+          </a>
+        )}
+
+        <button
+          onClick={handleSignOut}
+          className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-xs font-bold text-red-400 hover:bg-red-500/10 transition-colors"
+        >
+          <LogOut className="w-4 h-4" />
+          <span>Cerrar Sesión</span>
+        </button>
+      </div>
+    </aside>
+  );
+}
+</file>
+
+<file path="components/marketing/landing-hero.tsx">
+import Link from "next/link";
+import { Bot, Globe, LayoutDashboard, Store } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
+const features = [
+  {
+    icon: LayoutDashboard,
+    title: "Business Management",
+    description:
+      "Inventory, orders, customers, and analytics in one unified dashboard.",
+  },
+  {
+    icon: Globe,
+    title: "Public Catalog",
+    description:
+      "Share a beautiful online storefront with your customers — no extra setup.",
+  },
+  {
+    icon: Bot,
+    title: "AI Copilot",
+    description:
+      "Get intelligent insights, draft messages, and automate routine tasks.",
+  },
+];
+
+export function LandingHero() {
+  return (
+    <div className="flex flex-1 flex-col">
+      <header className="border-b">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
+          <Link href="/" className="flex items-center gap-2 font-semibold">
+            <Store className="size-5" />
+            MERCADEO
+          </Link>
+          <nav className="flex items-center gap-2">
+            <Button variant="ghost" render={<Link href="/catalog/demo" />}>
+              View Catalog
+            </Button>
+            <Button variant="outline" render={<Link href="/login" />}>
+              Sign in
+            </Button>
+            <Button render={<Link href="/register" />}>Get started</Button>
+          </nav>
+        </div>
+      </header>
+
+      <main className="flex-1">
+        <section className="mx-auto max-w-6xl px-4 py-20 text-center">
+          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
+            Run your business.
+            <br />
+            <span className="text-muted-foreground">Sell online. Think smarter.</span>
+          </h1>
+          <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
+            MERCADEO is your all-in-one platform for business management, a public
+            product catalog, and an AI copilot that helps you grow.
+          </p>
+          <div className="mt-8 flex justify-center gap-3">
+            <Button size="lg" render={<Link href="/register" />}>
+              Start for free
+            </Button>
+            <Button size="lg" variant="outline" render={<Link href="/dashboard" />}>
+              Open dashboard
+            </Button>
+          </div>
+        </section>
+
+        <section className="border-t bg-muted/30 py-16">
+          <div className="mx-auto grid max-w-6xl gap-6 px-4 sm:grid-cols-3">
+            {features.map((feature) => (
+              <Card key={feature.title}>
+                <CardHeader>
+                  <feature.icon className="size-8 text-primary" />
+                  <CardTitle>{feature.title}</CardTitle>
+                  <CardDescription>{feature.description}</CardDescription>
+                </CardHeader>
+                <CardContent />
+              </Card>
+            ))}
+          </div>
+        </section>
+      </main>
+
+      <footer className="border-t py-6 text-center text-sm text-muted-foreground">
+        © {new Date().getFullYear()} MERCADEO. Built with Next.js & Supabase.
+      </footer>
+    </div>
+  );
+}
+</file>
+
+<file path="components/ui/avatar.tsx">
+"use client"
+
+import * as React from "react"
+import { Avatar as AvatarPrimitive } from "@base-ui/react/avatar"
+
+import { cn } from "@/lib/utils"
+
+function Avatar({
+  className,
+  size = "default",
+  ...props
+}: AvatarPrimitive.Root.Props & {
+  size?: "default" | "sm" | "lg"
+}) {
+  return (
+    <AvatarPrimitive.Root
+      data-slot="avatar"
+      data-size={size}
+      className={cn(
+        "group/avatar relative flex size-8 shrink-0 rounded-full select-none after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken data-[size=lg]:size-10 data-[size=sm]:size-6 dark:after:mix-blend-lighten",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function AvatarImage({ className, ...props }: AvatarPrimitive.Image.Props) {
+  return (
+    <AvatarPrimitive.Image
+      data-slot="avatar-image"
+      className={cn(
+        "aspect-square size-full rounded-full object-cover",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function AvatarFallback({
+  className,
+  ...props
+}: AvatarPrimitive.Fallback.Props) {
+  return (
+    <AvatarPrimitive.Fallback
+      data-slot="avatar-fallback"
+      className={cn(
+        "flex size-full items-center justify-center rounded-full bg-muted text-sm text-muted-foreground group-data-[size=sm]/avatar:text-xs",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function AvatarBadge({ className, ...props }: React.ComponentProps<"span">) {
+  return (
+    <span
+      data-slot="avatar-badge"
+      className={cn(
+        "absolute right-0 bottom-0 z-10 inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground bg-blend-color ring-2 ring-background select-none",
+        "group-data-[size=sm]/avatar:size-2 group-data-[size=sm]/avatar:[&>svg]:hidden",
+        "group-data-[size=default]/avatar:size-2.5 group-data-[size=default]/avatar:[&>svg]:size-2",
+        "group-data-[size=lg]/avatar:size-3 group-data-[size=lg]/avatar:[&>svg]:size-2",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function AvatarGroup({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="avatar-group"
+      className={cn(
+        "group/avatar-group flex -space-x-2 *:data-[slot=avatar]:ring-2 *:data-[slot=avatar]:ring-background",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function AvatarGroupCount({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="avatar-group-count"
+      className={cn(
+        "relative flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-sm text-muted-foreground ring-2 ring-background group-has-data-[size=lg]/avatar-group:size-10 group-has-data-[size=sm]/avatar-group:size-6 [&>svg]:size-4 group-has-data-[size=lg]/avatar-group:[&>svg]:size-5 group-has-data-[size=sm]/avatar-group:[&>svg]:size-3",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+export {
+  Avatar,
+  AvatarImage,
+  AvatarFallback,
+  AvatarGroup,
+  AvatarGroupCount,
+  AvatarBadge,
+}
+</file>
+
+<file path="components/ui/badge.tsx">
+import { mergeProps } from "@base-ui/react/merge-props"
+import { useRender } from "@base-ui/react/use-render"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/lib/utils"
+
+const badgeVariants = cva(
+  "group/badge inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-4xl border border-transparent px-2 py-0.5 text-xs font-medium whitespace-nowrap transition-all focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&>svg]:pointer-events-none [&>svg]:size-3!",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground [a]:hover:bg-primary/80",
+        secondary:
+          "bg-secondary text-secondary-foreground [a]:hover:bg-secondary/80",
+        destructive:
+          "bg-destructive/10 text-destructive focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:focus-visible:ring-destructive/40 [a]:hover:bg-destructive/20",
+        outline:
+          "border-border text-foreground [a]:hover:bg-muted [a]:hover:text-muted-foreground",
+        ghost:
+          "hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+)
+
+function Badge({
+  className,
+  variant = "default",
+  render,
+  ...props
+}: useRender.ComponentProps<"span"> & VariantProps<typeof badgeVariants>) {
+  return useRender({
+    defaultTagName: "span",
+    props: mergeProps<"span">(
+      {
+        className: cn(badgeVariants({ variant }), className),
+      },
+      props
+    ),
+    render,
+    state: {
+      slot: "badge",
+      variant,
+    },
+  })
+}
+
+export { Badge, badgeVariants }
+</file>
+
+<file path="components/ui/button.tsx">
+import { Button as ButtonPrimitive } from "@base-ui/react/button"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/lib/utils"
+
+const buttonVariants = cva(
+  "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/80",
+        outline:
+          "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
+        ghost:
+          "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
+        destructive:
+          "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default:
+          "h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
+        xs: "h-6 gap-1 rounded-[min(var(--radius-md),10px)] px-2 text-xs in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
+        sm: "h-7 gap-1 rounded-[min(var(--radius-md),12px)] px-2.5 text-[0.8rem] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
+        lg: "h-9 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
+        icon: "size-8",
+        "icon-xs":
+          "size-6 rounded-[min(var(--radius-md),10px)] in-data-[slot=button-group]:rounded-lg [&_svg:not([class*='size-'])]:size-3",
+        "icon-sm":
+          "size-7 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg",
+        "icon-lg": "size-9",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  }
+)
+
+function Button({
+  className,
+  variant = "default",
+  size = "default",
+  ...props
+}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+  return (
+    <ButtonPrimitive
+      data-slot="button"
+      className={cn(buttonVariants({ variant, size, className }))}
+      {...props}
+    />
+  )
+}
+
+export { Button, buttonVariants }
+</file>
+
+<file path="components/ui/card.tsx">
+import * as React from "react"
+
+import { cn } from "@/lib/utils"
+
+function Card({
+  className,
+  size = "default",
+  ...props
+}: React.ComponentProps<"div"> & { size?: "default" | "sm" }) {
+  return (
+    <div
+      data-slot="card"
+      data-size={size}
+      className={cn(
+        "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-foreground ring-1 ring-foreground/10 [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-header"
+      className={cn(
+        "group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-xl px-(--card-spacing) has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-(--card-spacing)",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-title"
+      className={cn(
+        "font-heading text-base leading-snug font-medium group-data-[size=sm]/card:text-sm",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-description"
+      className={cn("text-sm text-muted-foreground", className)}
+      {...props}
+    />
+  )
+}
+
+function CardAction({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-action"
+      className={cn(
+        "col-start-2 row-span-2 row-start-1 self-start justify-self-end",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function CardContent({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-content"
+      className={cn("px-(--card-spacing)", className)}
+      {...props}
+    />
+  )
+}
+
+function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-footer"
+      className={cn(
+        "flex items-center rounded-b-xl border-t bg-muted/50 p-(--card-spacing)",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+export {
+  Card,
+  CardHeader,
+  CardFooter,
+  CardTitle,
+  CardAction,
+  CardDescription,
+  CardContent,
+}
+</file>
+
+<file path="components/ui/dropdown-menu.tsx">
+"use client"
+
+import * as React from "react"
+import { Menu as MenuPrimitive } from "@base-ui/react/menu"
+
+import { cn } from "@/lib/utils"
+import { ChevronRightIcon, CheckIcon } from "lucide-react"
+
+function DropdownMenu({ ...props }: MenuPrimitive.Root.Props) {
+  return <MenuPrimitive.Root data-slot="dropdown-menu" {...props} />
+}
+
+function DropdownMenuPortal({ ...props }: MenuPrimitive.Portal.Props) {
+  return <MenuPrimitive.Portal data-slot="dropdown-menu-portal" {...props} />
+}
+
+function DropdownMenuTrigger({ ...props }: MenuPrimitive.Trigger.Props) {
+  return <MenuPrimitive.Trigger data-slot="dropdown-menu-trigger" {...props} />
+}
+
+function DropdownMenuContent({
+  align = "start",
+  alignOffset = 0,
+  side = "bottom",
+  sideOffset = 4,
+  className,
+  ...props
+}: MenuPrimitive.Popup.Props &
+  Pick<
+    MenuPrimitive.Positioner.Props,
+    "align" | "alignOffset" | "side" | "sideOffset"
+  >) {
+  return (
+    <MenuPrimitive.Portal>
+      <MenuPrimitive.Positioner
+        className="isolate z-50 outline-none"
+        align={align}
+        alignOffset={alignOffset}
+        side={side}
+        sideOffset={sideOffset}
+      >
+        <MenuPrimitive.Popup
+          data-slot="dropdown-menu-content"
+          className={cn("z-50 max-h-(--available-height) w-(--anchor-width) min-w-32 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-lg bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100 outline-none data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:overflow-hidden data-closed:fade-out-0 data-closed:zoom-out-95", className )}
+          {...props}
+        />
+      </MenuPrimitive.Positioner>
+    </MenuPrimitive.Portal>
+  )
+}
+
+function DropdownMenuGroup({ ...props }: MenuPrimitive.Group.Props) {
+  return <MenuPrimitive.Group data-slot="dropdown-menu-group" {...props} />
+}
+
+function DropdownMenuLabel({
+  className,
+  inset,
+  ...props
+}: MenuPrimitive.GroupLabel.Props & {
+  inset?: boolean
+}) {
+  return (
+    <MenuPrimitive.GroupLabel
+      data-slot="dropdown-menu-label"
+      data-inset={inset}
+      className={cn(
+        "px-1.5 py-1 text-xs font-medium text-muted-foreground data-inset:pl-7",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function DropdownMenuItem({
+  className,
+  inset,
+  variant = "default",
+  ...props
+}: MenuPrimitive.Item.Props & {
+  inset?: boolean
+  variant?: "default" | "destructive"
+}) {
+  return (
+    <MenuPrimitive.Item
+      data-slot="dropdown-menu-item"
+      data-inset={inset}
+      data-variant={variant}
+      className={cn(
+        "group/dropdown-menu-item relative flex cursor-default items-center gap-1.5 rounded-md px-1.5 py-1 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground data-inset:pl-7 data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 data-[variant=destructive]:focus:text-destructive dark:data-[variant=destructive]:focus:bg-destructive/20 data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 data-[variant=destructive]:*:[svg]:text-destructive",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function DropdownMenuSub({ ...props }: MenuPrimitive.SubmenuRoot.Props) {
+  return <MenuPrimitive.SubmenuRoot data-slot="dropdown-menu-sub" {...props} />
+}
+
+function DropdownMenuSubTrigger({
+  className,
+  inset,
+  children,
+  ...props
+}: MenuPrimitive.SubmenuTrigger.Props & {
+  inset?: boolean
+}) {
+  return (
+    <MenuPrimitive.SubmenuTrigger
+      data-slot="dropdown-menu-sub-trigger"
+      data-inset={inset}
+      className={cn(
+        "flex cursor-default items-center gap-1.5 rounded-md px-1.5 py-1 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground data-inset:pl-7 data-popup-open:bg-accent data-popup-open:text-accent-foreground data-open:bg-accent data-open:text-accent-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        className
+      )}
+      {...props}
+    >
+      {children}
+      <ChevronRightIcon className="ml-auto" />
+    </MenuPrimitive.SubmenuTrigger>
+  )
+}
+
+function DropdownMenuSubContent({
+  align = "start",
+  alignOffset = -3,
+  side = "right",
+  sideOffset = 0,
+  className,
+  ...props
+}: React.ComponentProps<typeof DropdownMenuContent>) {
+  return (
+    <DropdownMenuContent
+      data-slot="dropdown-menu-sub-content"
+      className={cn("w-auto min-w-[96px] rounded-lg bg-popover p-1 text-popover-foreground shadow-lg ring-1 ring-foreground/10 duration-100 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95", className )}
+      align={align}
+      alignOffset={alignOffset}
+      side={side}
+      sideOffset={sideOffset}
+      {...props}
+    />
+  )
+}
+
+function DropdownMenuCheckboxItem({
+  className,
+  children,
+  checked,
+  inset,
+  ...props
+}: MenuPrimitive.CheckboxItem.Props & {
+  inset?: boolean
+}) {
+  return (
+    <MenuPrimitive.CheckboxItem
+      data-slot="dropdown-menu-checkbox-item"
+      data-inset={inset}
+      className={cn(
+        "relative flex cursor-default items-center gap-1.5 rounded-md py-1 pr-8 pl-1.5 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground focus:**:text-accent-foreground data-inset:pl-7 data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        className
+      )}
+      checked={checked}
+      {...props}
+    >
+      <span
+        className="pointer-events-none absolute right-2 flex items-center justify-center"
+        data-slot="dropdown-menu-checkbox-item-indicator"
+      >
+        <MenuPrimitive.CheckboxItemIndicator>
+          <CheckIcon
+          />
+        </MenuPrimitive.CheckboxItemIndicator>
+      </span>
+      {children}
+    </MenuPrimitive.CheckboxItem>
+  )
+}
+
+function DropdownMenuRadioGroup({ ...props }: MenuPrimitive.RadioGroup.Props) {
+  return (
+    <MenuPrimitive.RadioGroup
+      data-slot="dropdown-menu-radio-group"
+      {...props}
+    />
+  )
+}
+
+function DropdownMenuRadioItem({
+  className,
+  children,
+  inset,
+  ...props
+}: MenuPrimitive.RadioItem.Props & {
+  inset?: boolean
+}) {
+  return (
+    <MenuPrimitive.RadioItem
+      data-slot="dropdown-menu-radio-item"
+      data-inset={inset}
+      className={cn(
+        "relative flex cursor-default items-center gap-1.5 rounded-md py-1 pr-8 pl-1.5 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground focus:**:text-accent-foreground data-inset:pl-7 data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        className
+      )}
+      {...props}
+    >
+      <span
+        className="pointer-events-none absolute right-2 flex items-center justify-center"
+        data-slot="dropdown-menu-radio-item-indicator"
+      >
+        <MenuPrimitive.RadioItemIndicator>
+          <CheckIcon
+          />
+        </MenuPrimitive.RadioItemIndicator>
+      </span>
+      {children}
+    </MenuPrimitive.RadioItem>
+  )
+}
+
+function DropdownMenuSeparator({
+  className,
+  ...props
+}: MenuPrimitive.Separator.Props) {
+  return (
+    <MenuPrimitive.Separator
+      data-slot="dropdown-menu-separator"
+      className={cn("-mx-1 my-1 h-px bg-border", className)}
+      {...props}
+    />
+  )
+}
+
+function DropdownMenuShortcut({
+  className,
+  ...props
+}: React.ComponentProps<"span">) {
+  return (
+    <span
+      data-slot="dropdown-menu-shortcut"
+      className={cn(
+        "ml-auto text-xs tracking-widest text-muted-foreground group-focus/dropdown-menu-item:text-accent-foreground",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+export {
+  DropdownMenu,
+  DropdownMenuPortal,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuLabel,
+  DropdownMenuItem,
+  DropdownMenuCheckboxItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+}
+</file>
+
+<file path="components/ui/input.tsx">
+import * as React from "react"
+import { Input as InputPrimitive } from "@base-ui/react/input"
+
+import { cn } from "@/lib/utils"
+
+function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+  return (
+    <InputPrimitive
+      type={type}
+      data-slot="input"
+      className={cn(
+        "h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+export { Input }
+</file>
+
+<file path="components/ui/label.tsx">
+"use client"
+
+import * as React from "react"
+
+import { cn } from "@/lib/utils"
+
+function Label({ className, ...props }: React.ComponentProps<"label">) {
+  return (
+    <label
+      data-slot="label"
+      className={cn(
+        "flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+export { Label }
+</file>
+
+<file path="components/ui/separator.tsx">
+"use client"
+
+import { Separator as SeparatorPrimitive } from "@base-ui/react/separator"
+
+import { cn } from "@/lib/utils"
+
+function Separator({
+  className,
+  orientation = "horizontal",
+  ...props
+}: SeparatorPrimitive.Props) {
+  return (
+    <SeparatorPrimitive
+      data-slot="separator"
+      orientation={orientation}
+      className={cn(
+        "shrink-0 bg-border data-horizontal:h-px data-horizontal:w-full data-vertical:w-px data-vertical:self-stretch",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+export { Separator }
+</file>
+
+<file path="components/ui/sheet.tsx">
+"use client"
+
+import * as React from "react"
+import { Dialog as SheetPrimitive } from "@base-ui/react/dialog"
+
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { XIcon } from "lucide-react"
+
+function Sheet({ ...props }: SheetPrimitive.Root.Props) {
+  return <SheetPrimitive.Root data-slot="sheet" {...props} />
+}
+
+function SheetTrigger({ ...props }: SheetPrimitive.Trigger.Props) {
+  return <SheetPrimitive.Trigger data-slot="sheet-trigger" {...props} />
+}
+
+function SheetClose({ ...props }: SheetPrimitive.Close.Props) {
+  return <SheetPrimitive.Close data-slot="sheet-close" {...props} />
+}
+
+function SheetPortal({ ...props }: SheetPrimitive.Portal.Props) {
+  return <SheetPrimitive.Portal data-slot="sheet-portal" {...props} />
+}
+
+function SheetOverlay({ className, ...props }: SheetPrimitive.Backdrop.Props) {
+  return (
+    <SheetPrimitive.Backdrop
+      data-slot="sheet-overlay"
+      className={cn(
+        "fixed inset-0 z-50 bg-black/10 transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0 supports-backdrop-filter:backdrop-blur-xs",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function SheetContent({
+  className,
+  children,
+  side = "right",
+  showCloseButton = true,
+  ...props
+}: SheetPrimitive.Popup.Props & {
+  side?: "top" | "right" | "bottom" | "left"
+  showCloseButton?: boolean
+}) {
+  return (
+    <SheetPortal>
+      <SheetOverlay />
+      <SheetPrimitive.Popup
+        data-slot="sheet-content"
+        data-side={side}
+        className={cn(
+          "fixed z-50 flex flex-col gap-4 bg-popover bg-clip-padding text-sm text-popover-foreground shadow-lg transition duration-200 ease-in-out data-ending-style:opacity-0 data-starting-style:opacity-0 data-[side=bottom]:inset-x-0 data-[side=bottom]:bottom-0 data-[side=bottom]:h-auto data-[side=bottom]:border-t data-[side=bottom]:data-ending-style:translate-y-[2.5rem] data-[side=bottom]:data-starting-style:translate-y-[2.5rem] data-[side=left]:inset-y-0 data-[side=left]:left-0 data-[side=left]:h-full data-[side=left]:w-3/4 data-[side=left]:border-r data-[side=left]:data-ending-style:translate-x-[-2.5rem] data-[side=left]:data-starting-style:translate-x-[-2.5rem] data-[side=right]:inset-y-0 data-[side=right]:right-0 data-[side=right]:h-full data-[side=right]:w-3/4 data-[side=right]:border-l data-[side=right]:data-ending-style:translate-x-[2.5rem] data-[side=right]:data-starting-style:translate-x-[2.5rem] data-[side=top]:inset-x-0 data-[side=top]:top-0 data-[side=top]:h-auto data-[side=top]:border-b data-[side=top]:data-ending-style:translate-y-[-2.5rem] data-[side=top]:data-starting-style:translate-y-[-2.5rem] data-[side=left]:sm:max-w-sm data-[side=right]:sm:max-w-sm",
+          className
+        )}
+        {...props}
+      >
+        {children}
+        {showCloseButton && (
+          <SheetPrimitive.Close
+            data-slot="sheet-close"
+            render={
+              <Button
+                variant="ghost"
+                className="absolute top-3 right-3"
+                size="icon-sm"
+              />
+            }
+          >
+            <XIcon
+            />
+            <span className="sr-only">Close</span>
+          </SheetPrimitive.Close>
+        )}
+      </SheetPrimitive.Popup>
+    </SheetPortal>
+  )
+}
+
+function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="sheet-header"
+      className={cn("flex flex-col gap-0.5 p-4", className)}
+      {...props}
+    />
+  )
+}
+
+function SheetFooter({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="sheet-footer"
+      className={cn("mt-auto flex flex-col gap-2 p-4", className)}
+      {...props}
+    />
+  )
+}
+
+function SheetTitle({ className, ...props }: SheetPrimitive.Title.Props) {
+  return (
+    <SheetPrimitive.Title
+      data-slot="sheet-title"
+      className={cn(
+        "font-heading text-base font-medium text-foreground",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function SheetDescription({
+  className,
+  ...props
+}: SheetPrimitive.Description.Props) {
+  return (
+    <SheetPrimitive.Description
+      data-slot="sheet-description"
+      className={cn("text-sm text-muted-foreground", className)}
+      {...props}
+    />
+  )
+}
+
+export {
+  Sheet,
+  SheetTrigger,
+  SheetClose,
+  SheetContent,
+  SheetHeader,
+  SheetFooter,
+  SheetTitle,
+  SheetDescription,
+}
+</file>
+
+<file path="lib/supabase/client.ts">
+import { createBrowserClient } from '@supabase/ssr';
+import { Database } from '@/types/database';
+
+export function createClient() {
+  return createBrowserClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+}
+</file>
+
+<file path="lib/supabase/index.ts">
+export { createClient as createBrowserClient } from "./client";
+export { createClient as createServerClient } from "./server";
+export { updateSession } from "./middleware";
+</file>
+
+<file path="lib/supabase/server.ts">
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+import { Database } from '@/types/database';
+
+export async function createClient() {
+  const cookieStore = await cookies();
+
+  return createServerClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            );
+          } catch {
+            // Safe to ignore when called from Server Components
+          }
+        },
+      },
+    }
+  );
+}
+</file>
+
+<file path="lib/utils.ts">
+import { clsx, type ClassValue } from "clsx"
+import { twMerge } from "tailwind-merge"
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+</file>
+
+<file path="public/file.svg">
+<svg fill="none" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M14.5 13.5V5.41a1 1 0 0 0-.3-.7L9.8.29A1 1 0 0 0 9.08 0H1.5v13.5A2.5 2.5 0 0 0 4 16h8a2.5 2.5 0 0 0 2.5-2.5m-1.5 0v-7H8v-5H3v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1M9.5 5V2.12L12.38 5zM5.13 5h-.62v1.25h2.12V5zm-.62 3h7.12v1.25H4.5zm.62 3h-.62v1.25h7.12V11z" clip-rule="evenodd" fill="#666" fill-rule="evenodd"/></svg>
+</file>
+
+<file path="public/globe.svg">
+<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><g clip-path="url(#a)"><path fill-rule="evenodd" clip-rule="evenodd" d="M10.27 14.1a6.5 6.5 0 0 0 3.67-3.45q-1.24.21-2.7.34-.31 1.83-.97 3.1M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m.48-1.52a7 7 0 0 1-.96 0H7.5a4 4 0 0 1-.84-1.32q-.38-.89-.63-2.08a40 40 0 0 0 3.92 0q-.25 1.2-.63 2.08a4 4 0 0 1-.84 1.31zm2.94-4.76q1.66-.15 2.95-.43a7 7 0 0 0 0-2.58q-1.3-.27-2.95-.43a18 18 0 0 1 0 3.44m-1.27-3.54a17 17 0 0 1 0 3.64 39 39 0 0 1-4.3 0 17 17 0 0 1 0-3.64 39 39 0 0 1 4.3 0m1.1-1.17q1.45.13 2.69.34a6.5 6.5 0 0 0-3.67-3.44q.65 1.26.98 3.1M8.48 1.5l.01.02q.41.37.84 1.31.38.89.63 2.08a40 40 0 0 0-3.92 0q.25-1.2.63-2.08a4 4 0 0 1 .85-1.32 7 7 0 0 1 .96 0m-2.75.4a6.5 6.5 0 0 0-3.67 3.44 29 29 0 0 1 2.7-.34q.31-1.83.97-3.1M4.58 6.28q-1.66.16-2.95.43a7 7 0 0 0 0 2.58q1.3.27 2.95.43a18 18 0 0 1 0-3.44m.17 4.71q-1.45-.12-2.69-.34a6.5 6.5 0 0 0 3.67 3.44q-.65-1.27-.98-3.1" fill="#666"/></g><defs><clipPath id="a"><path fill="#fff" d="M0 0h16v16H0z"/></clipPath></defs></svg>
+</file>
+
+<file path="public/next.svg">
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 394 80"><path fill="#000" d="M262 0h68.5v12.7h-27.2v66.6h-13.6V12.7H262V0ZM149 0v12.7H94v20.4h44.3v12.6H94v21h55v12.6H80.5V0h68.7zm34.3 0h-17.8l63.8 79.4h17.9l-32-39.7 32-39.6h-17.9l-23 28.6-23-28.6zm18.3 56.7-9-11-27.1 33.7h17.8l18.3-22.7z"/><path fill="#000" d="M81 79.3 17 0H0v79.3h13.6V17l50.2 62.3H81Zm252.6-.4c-1 0-1.8-.4-2.5-1s-1.1-1.6-1.1-2.6.3-1.8 1-2.5 1.6-1 2.6-1 1.8.3 2.5 1a3.4 3.4 0 0 1 .6 4.3 3.7 3.7 0 0 1-3 1.8zm23.2-33.5h6v23.3c0 2.1-.4 4-1.3 5.5a9.1 9.1 0 0 1-3.8 3.5c-1.6.8-3.5 1.3-5.7 1.3-2 0-3.7-.4-5.3-1s-2.8-1.8-3.7-3.2c-.9-1.3-1.4-3-1.4-5h6c.1.8.3 1.6.7 2.2s1 1.2 1.6 1.5c.7.4 1.5.5 2.4.5 1 0 1.8-.2 2.4-.6a4 4 0 0 0 1.6-1.8c.3-.8.5-1.8.5-3V45.5zm30.9 9.1a4.4 4.4 0 0 0-2-3.3 7.5 7.5 0 0 0-4.3-1.1c-1.3 0-2.4.2-3.3.5-.9.4-1.6 1-2 1.6a3.5 3.5 0 0 0-.3 4c.3.5.7.9 1.3 1.2l1.8 1 2 .5 3.2.8c1.3.3 2.5.7 3.7 1.2a13 13 0 0 1 3.2 1.8 8.1 8.1 0 0 1 3 6.5c0 2-.5 3.7-1.5 5.1a10 10 0 0 1-4.4 3.5c-1.8.8-4.1 1.2-6.8 1.2-2.6 0-4.9-.4-6.8-1.2-2-.8-3.4-2-4.5-3.5a10 10 0 0 1-1.7-5.6h6a5 5 0 0 0 3.5 4.6c1 .4 2.2.6 3.4.6 1.3 0 2.5-.2 3.5-.6 1-.4 1.8-1 2.4-1.7a4 4 0 0 0 .8-2.4c0-.9-.2-1.6-.7-2.2a11 11 0 0 0-2.1-1.4l-3.2-1-3.8-1c-2.8-.7-5-1.7-6.6-3.2a7.2 7.2 0 0 1-2.4-5.7 8 8 0 0 1 1.7-5 10 10 0 0 1 4.3-3.5c2-.8 4-1.2 6.4-1.2 2.3 0 4.4.4 6.2 1.2 1.8.8 3.2 2 4.3 3.4 1 1.4 1.5 3 1.5 5h-5.8z"/></svg>
+</file>
+
+<file path="public/vercel.svg">
+<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1155 1000"><path d="m577.3 0 577.4 1000H0z" fill="#fff"/></svg>
+</file>
+
+<file path="public/window.svg">
+<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path fill-rule="evenodd" clip-rule="evenodd" d="M1.5 2.5h13v10a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1zM0 1h16v11.5a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 0 12.5zm3.75 4.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5M7 4.75a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0m1.75.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5" fill="#666"/></svg>
+</file>
+
+<file path="types/database.ts">
+export type SubscriptionStatus = 'trialing' | 'active' | 'past_due' | 'canceled';
+export type PaymentMethod = 'cash' | 'transfer' | 'mobile_pay' | 'binance_pay' | 'debt';
+export type SaleType = 'POS' | 'Catalog';
+export type SubPaymentMethod = 'mobile_pay' | 'binance_pay';
+export type SubPaymentStatus = 'pending' | 'approved' | 'rejected';
+
+export interface Profile {
+  id: string;
+  business_name: string;
+  slug: string;
+  category_niche: string;
+  logo_url?: string | null;
+  banner_url?: string | null;
+  phone_whatsapp?: string | null;
+  social_links?: Record<string, string> | null;
+  subscription_status: SubscriptionStatus;
+  trial_ends_at: string;
+  pago_movil_id?: string | null;
+  pago_movil_phone?: string | null;
+  pago_movil_bank?: string | null;
+  binance_pay_id?: string | null;
+  created_at: string;
+}
+
+export interface Product {
+  id: string;
+  business_id: string;
+  name: string;
+  description?: string | null;
+  category: string;
+  cost_price: number;
+  selling_price: number;
+  stock_quantity: number;
+  min_stock_alert: number;
+  images: string[];
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface ProductVariant {
+  id: string;
+  product_id: string;
+  variant_name: string;
+  variant_value: string;
+  additional_price: number;
+  stock_quantity: number;
+}
+
+export interface Sale {
+  id: string;
+  business_id: string;
+  total_amount: number;
+  payment_method: PaymentMethod;
+  sale_type: SaleType;
+  reference_number?: string | null;
+  customer_id?: string | null;
+  created_at: string;
+}
+
+export interface SaleItem {
+  id: string;
+  sale_id: string;
+  product_id: string;
+  quantity: number;
+  unit_price: number;
+}
+
+export interface Expense {
+  id: string;
+  business_id: string;
+  title: string;
+  category: string;
+  amount: number;
+  created_at: string;
+}
+
+export interface Customer {
+  id: string;
+  business_id: string;
+  name: string;
+  phone?: string | null;
+  debt_balance: number;
+}
+
+export interface SubscriptionPayment {
+  id: string;
+  business_id: string;
+  payment_method: SubPaymentMethod;
+  amount_usd: number;
+  reference_code: string;
+  status: SubPaymentStatus;
+  created_at: string;
+}
+
+export interface AIInsight {
+  id: string;
+  business_id: string;
+  type: string;
+  content: string;
+  created_at: string;
+}
+
+export interface Database {
+  public: {
+    Tables: {
+      profiles: {
+        Row: Profile;
+        Insert: Omit<Profile, 'created_at'> & { created_at?: string };
+        Update: Partial<Omit<Profile, 'id' | 'created_at'>>;
+        Relationships: [];
+      };
+      products: {
+        Row: Product;
+        Insert: Omit<Product, 'id' | 'created_at'> & { id?: string; created_at?: string };
+        Update: Partial<Omit<Product, 'id' | 'business_id' | 'created_at'>>;
+        Relationships: [];
+      };
+      product_variants: {
+        Row: ProductVariant;
+        Insert: Omit<ProductVariant, 'id'> & { id?: string };
+        Update: Partial<Omit<ProductVariant, 'id' | 'product_id'>>;
+        Relationships: [];
+      };
+      sales: {
+        Row: Sale;
+        Insert: Omit<Sale, 'id' | 'created_at'> & { id?: string; created_at?: string };
+        Update: Partial<Omit<Sale, 'id' | 'business_id' | 'created_at'>>;
+        Relationships: [];
+      };
+      sale_items: {
+        Row: SaleItem;
+        Insert: Omit<SaleItem, 'id'> & { id?: string };
+        Update: Partial<Omit<SaleItem, 'id' | 'sale_id'>>;
+        Relationships: [];
+      };
+      expenses: {
+        Row: Expense;
+        Insert: Omit<Expense, 'id' | 'created_at'> & { id?: string; created_at?: string };
+        Update: Partial<Omit<Expense, 'id' | 'business_id' | 'created_at'>>;
+        Relationships: [];
+      };
+      customers: {
+        Row: Customer;
+        Insert: Omit<Customer, 'id'> & { id?: string };
+        Update: Partial<Omit<Customer, 'id' | 'business_id'>>;
+        Relationships: [];
+      };
+      subscription_payments: {
+        Row: SubscriptionPayment;
+        Insert: Omit<SubscriptionPayment, 'id' | 'created_at'> & { id?: string; created_at?: string };
+        Update: Partial<Omit<SubscriptionPayment, 'id' | 'business_id' | 'created_at'>>;
+        Relationships: [];
+      };
+      ai_insights: {
+        Row: AIInsight;
+        Insert: Omit<AIInsight, 'id' | 'created_at'> & { id?: string; created_at?: string };
+        Update: Partial<Omit<AIInsight, 'id' | 'business_id' | 'created_at'>>;
+        Relationships: [];
+      };
+    };
+  };
+}
+</file>
+
+<file path="types/index.ts">
+import type { Tables } from "./database";
+
+export type Business = Tables<"businesses">;
+export type Product = Tables<"products">;
+export type Category = Tables<"categories">;
+export type Customer = Tables<"customers">;
+export type Order = Tables<"orders">;
+export type OrderItem = Tables<"order_items">;
+export type CopilotConversation = Tables<"copilot_conversations">;
+export type CopilotMessage = Tables<"copilot_messages">;
+
+export type BusinessRole = "owner" | "admin" | "staff";
+export type OrderStatus = "pending" | "confirmed" | "fulfilled" | "cancelled";
+export type OrderSource = "manual" | "catalog" | "import";
+
+export interface DashboardStats {
+  totalRevenue: number;
+  totalOrders: number;
+  totalCustomers: number;
+  lowStockProducts: number;
+}
+
+export interface NavItem {
+  title: string;
+  href: string;
+  icon: string;
+  description?: string;
+}
+</file>
+
+<file path=".cursorrules">
+You are an expert Full-Stack Developer specialized in Next.js 14+ (App Router), TypeScript, Tailwind CSS, Shadcn UI, Supabase (@supabase/ssr), and Stripe API.
+
+PROJECT: "MERCADEO" - SaaS all-in-one business management app, online public catalog, and AI business advisor for small businesses and creators.
+
+BUSINESS MODEL: Paid SaaS with a 14-day Free Trial (credit card required upfront via Stripe).
+
+BRANDING & PALETTE:
+- Primary/Backgrounds: Clean White/Slate (#F8FAFC) & Deep Slate Dark (#0A2540)
+- Accents: Deep Teal (#0A2540), Cyan Blue (#00D2FF), Vibrant Emerald Green (#22C55E)
+- Typography: Inter / Plus Jakarta Sans
+
+TECH STACK:
+- Next.js 14 App Router (TypeScript)
+- Tailwind CSS + Lucide Icons + Shadcn UI
+- Supabase SSR (Auth, Database, Storage)
+- Payments: Stripe SDK + Webhooks
+- Vercel AI SDK (OpenAI/Claude API)
+
+CODING RULES:
+1. Mobile-first responsive UI.
+2. Use React Server Components by default; use 'use client' only for active interaction.
+3. Keep layout clean, modern, and accessible with high contrast for numbers and buttons.
+</file>
+
+<file path=".gitignore">
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+</file>
+
+<file path="AGENTS.md">
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
+</file>
+
+<file path="CLAUDE.md">
+@AGENTS.md
+</file>
+
+<file path="components.json">
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "base-nova",
+  "rsc": true,
+  "tsx": true,
+  "tailwind": {
+    "config": "",
+    "css": "app/globals.css",
+    "baseColor": "neutral",
+    "cssVariables": true,
+    "prefix": ""
+  },
+  "iconLibrary": "lucide",
+  "rtl": false,
+  "aliases": {
+    "components": "@/components",
+    "utils": "@/lib/utils",
+    "ui": "@/components/ui",
+    "lib": "@/lib",
+    "hooks": "@/hooks"
+  },
+  "menuColor": "default",
+  "menuAccent": "subtle",
+  "registries": {}
+}
+</file>
+
+<file path="eslint.config.mjs">
+import { defineConfig, globalIgnores } from "eslint/config";
+import nextVitals from "eslint-config-next/core-web-vitals";
+import nextTs from "eslint-config-next/typescript";
+
+const eslintConfig = defineConfig([
+  ...nextVitals,
+  ...nextTs,
+  // Override default ignores of eslint-config-next.
+  globalIgnores([
+    // Default ignores of eslint-config-next:
+    ".next/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts",
+  ]),
+]);
+
+export default eslintConfig;
+</file>
+
+<file path="middleware.ts">
+import { NextResponse, type NextRequest } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
+
+export async function middleware(request: NextRequest) {
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  });
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          );
+          response = NextResponse.next({
+            request,
+          });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          );
+        },
+      },
+    }
+  );
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const isAuthRoute =
+    request.nextUrl.pathname.startsWith('/login') ||
+    request.nextUrl.pathname.startsWith('/register');
+  const isDashboardRoute = request.nextUrl.pathname.startsWith('/dashboard');
+  const isOnboardingRoute = request.nextUrl.pathname.startsWith('/onboarding');
+  const isExpiredRoute = request.nextUrl.pathname.startsWith('/billing/expired');
+
+  if (!user && isDashboardRoute) {
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+
+  if (user) {
+    if (isAuthRoute) {
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
+
+    const { data: profile } = await (supabase.from('profiles') as any)
+      .select('subscription_status, trial_ends_at, business_name')
+      .eq('id', user.id)
+      .single();
+
+    if (profile && !profile.business_name && !isOnboardingRoute) {
+      return NextResponse.redirect(new URL('/onboarding', request.url));
+    }
+
+    if (profile && isDashboardRoute) {
+      const now = new Date();
+      const trialEnds = profile.trial_ends_at ? new Date(profile.trial_ends_at) : null;
+      const isExpired =
+        profile.subscription_status === 'expired' ||
+        (profile.subscription_status === 'trialing' && trialEnds && trialEnds < now);
+
+      if (isExpired && !isExpiredRoute) {
+        return NextResponse.redirect(new URL('/billing/expired', request.url));
+      }
+    }
+  }
+
+  return response;
+}
+
+export const config = {
+  matcher: [
+    '/dashboard/:path*',
+    '/onboarding',
+    '/login',
+    '/register',
+    '/billing/expired',
+  ],
+};
+</file>
+
+<file path="next.config.ts">
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  /* config options here */
+};
+
+export default nextConfig;
+</file>
+
+<file path="postcss.config.mjs">
+const config = {
+  plugins: {
+    "@tailwindcss/postcss": {},
+  },
+};
+
+export default config;
+</file>
+
+<file path="tsconfig.json">
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    "**/*.mts"
+  ],
+  "exclude": ["node_modules"]
+}
+</file>
+
+<file path="app/globals.css">
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+</file>
+
+<file path="app/layout.tsx">
+import type { Metadata } from "next";
+import { DM_Sans, Geist_Mono } from "next/font/google";
+
+import "./globals.css";
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  variable: "--font-sans",
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+export const metadata: Metadata = {
+  title: {
+    default: "MERCADEO",
+    template: "%s | MERCADEO",
+  },
+  description:
+    "All-in-one business management, online catalog, and AI copilot for modern merchants.",
+};
+
+export default function RootLayout({ children }: LayoutProps<"/">) {
+  return (
+    <html
+      lang="en"
+      className={`${dmSans.variable} ${geistMono.variable} h-full antialiased`}
+    >
+      <body className="min-h-full flex flex-col">{children}</body>
+    </html>
+  );
+}
+</file>
+
+<file path="app/page.tsx">
+import { LandingHero } from "@/components/marketing/landing-hero";
+
+export default function HomePage() {
+  return <LandingHero />;
+}
+</file>
+
+<file path="package.json">
+{
+  "name": "mercadeo",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@base-ui/react": "^1.7.0",
+    "@supabase/ssr": "^0.12.4",
+    "@supabase/supabase-js": "^2.112.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.31.0",
+    "next": "16.3.1",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "shadcn": "^4.18.0",
+    "stripe": "^22.5.0",
+    "tailwind-merge": "^3.6.0",
+    "tw-animate-css": "^1.4.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.1",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
+</file>
+
+<file path="README.md">
+# MERCADEO
+
+All-in-one business management platform with online catalog and AI copilot.
+
+## Stack
+
+- Next.js 16 (App Router) + TypeScript
+- Tailwind CSS v4 + Shadcn UI + Lucide Icons
+- Supabase (`@supabase/ssr`) for auth and database
+
+## Getting Started
+
+```bash
+cp .env.local.example .env.local
+# Add your Supabase URL and anon key to .env.local
+npm run dev
+```
+
+## Project Structure
+
+| Path | Purpose |
+|------|---------|
+| `app/(auth)/` | Login & registration |
+| `app/(dashboard)/` | Protected business management |
+| `app/(public)/catalog/` | Public product storefront |
+| `components/` | Shared UI and layout components |
+| `lib/supabase/` | Supabase client utilities |
+| `types/` | TypeScript type definitions |
+
+## Supabase Setup
+
+1. Create a Supabase project at [supabase.com](https://supabase.com)
+2. Run the schema SQL from `.cursorrules` in the SQL Editor
+3. Copy project URL and anon key to `.env.local`
+
+See `.cursorrules` for full schema, RLS policies, and development guidelines.
+</file>
+
+</files>

@@ -1,87 +1,93 @@
-import { DollarSign, Package, ShoppingCart, Users } from "lucide-react";
+import { createClient } from '@/lib/supabase/server';
+import { 
+  TrendingUp, 
+  Package, 
+  ShoppingBag, 
+  ArrowUpRight, 
+  Store 
+} from 'lucide-react';
+import Link from 'next/link';
 
-import { DashboardShell } from "@/components/layout/dashboard-shell";
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+export default async function DashboardPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
-export const metadata = {
-  title: "Dashboard",
-};
+  const { data: profile } = await (supabase.from('profiles') as any)
+    .select('*')
+    .eq('id', user?.id)
+    .single();
 
-const stats = [
-  {
-    title: "Revenue",
-    value: "$12,450",
-    description: "+12% from last month",
-    icon: DollarSign,
-  },
-  {
-    title: "Orders",
-    value: "148",
-    description: "23 pending fulfillment",
-    icon: ShoppingCart,
-  },
-  {
-    title: "Customers",
-    value: "892",
-    description: "+48 new this month",
-    icon: Users,
-  },
-  {
-    title: "Products",
-    value: "156",
-    description: "5 low stock alerts",
-    icon: Package,
-  },
-];
-
-export default function DashboardPage() {
   return (
-    <DashboardShell>
-      <div className="space-y-6">
+    <div className="space-y-8 max-w-7xl mx-auto">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Welcome back. Here&apos;s what&apos;s happening with your business.
+          <h1 className="text-2xl font-black text-[#0A2540]">
+            ¡Hola, {profile?.business_name || 'Comerciante'}! 👋
+          </h1>
+          <p className="text-xs text-slate-500 mt-1">
+            Aquí tienes el resumen de tu negocio en tiempo real.
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {stats.map((stat) => (
-            <Card key={stat.title}>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-                <stat.icon className="size-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
-                <p className="text-xs text-muted-foreground">{stat.description}</p>
-              </CardContent>
-            </Card>
-          ))}
+        <Link
+          href="/dashboard/pos"
+          className="inline-flex items-center gap-2 bg-[#0A2540] hover:bg-slate-800 text-white text-xs font-bold px-5 py-3 rounded-xl transition-all shadow-sm"
+        >
+          <ShoppingBag className="w-4 h-4 text-[#00D2FF]" /> Nueva Venta POS
+        </Link>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              Ventas Hoy
+            </span>
+            <div className="p-2 bg-emerald-50 text-[#22C55E] rounded-xl">
+              <TrendingUp className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="text-2xl font-black text-[#0A2540]">$0.00</div>
+          <span className="text-[11px] text-slate-400 block">
+            0 transacciones registradas
+          </span>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent activity</CardTitle>
-            <CardDescription>
-              Your latest orders and inventory updates will appear here.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Badge variant="secondary">Demo</Badge>
-              Connect Supabase to see live data.
+        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              Productos en Stock
+            </span>
+            <div className="p-2 bg-cyan-50 text-[#00D2FF] rounded-xl">
+              <Package className="w-4 h-4" />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+          <div className="text-2xl font-black text-[#0A2540]">0</div>
+          <Link
+            href="/dashboard/inventory"
+            className="text-[11px] font-bold text-[#0A2540] hover:underline flex items-center gap-1"
+          >
+            Gestionar inventario <ArrowUpRight className="w-3 h-3" />
+          </Link>
+        </div>
+
+        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              Estado del Plan
+            </span>
+            <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+              <Store className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="text-2xl font-black text-[#0A2540] capitalize">
+            {profile?.subscription_status === 'trialing' ? 'Prueba Gratis' : 'Activo'}
+          </div>
+          <span className="text-[11px] text-slate-400 block">
+            Suscripción mensual: $5.99
+          </span>
+        </div>
       </div>
-    </DashboardShell>
+    </div>
   );
 }
